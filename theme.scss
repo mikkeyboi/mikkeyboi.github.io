@@ -1,0 +1,52 @@
+/*-- scss:defaults --*/
+
+// Typography — Inter for UI/body, JetBrains Mono for code, Newsreader as serif accent
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-monospace: "JetBrains Mono", SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+$font-family-serif: "Newsreader", Georgia, "Times New Roman", serif;
+$headings-font-family: $font-family-sans-serif;
+
+// Color system — neutral, content-first
+$body-color: #1f2328;
+$body-bg: #ffffff;
+$body-secondary: #59636e;
+$link-color: #0550ae;
+$link-hover-color: #033d8b;
+$border-color: #d1d9e0;
+
+// Code
+$code-bg: #f6f8fa;
+$code-color: #1f2328;
+$code-block-bg: #f6f8fa;
+
+// Type scale — slightly tighter, more editorial
+$font-size-base: 1.0625rem;       // 17px
+$line-height-base: 1.7;
+$h1-font-size: 2.25rem;
+$h2-font-size: 1.625rem;
+$h3-font-size: 1.25rem;
+$headings-line-height: 1.3;
+$headings-font-weight: 650;
+
+// Container
+$content-padding-top: 2rem;
+
+/*-- scss:rules --*/
+
+// Pull in fonts (Quarto includes them once via @import in compiled CSS)
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap");
+
+// OpenType niceties
+body {
+  font-feature-settings: "kern", "liga", "calt", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+// Headings — tighter tracking
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.015em;
+}
+
+h1 { letter-spacing: -0.025em; }

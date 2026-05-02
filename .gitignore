@@ -1,0 +1,11 @@
+/.quarto/
+/_site/
+/_freeze/
+*.html
+.DS_Store
+.ipynb_checkpoints/
+.venv/
+__pycache__/
+node_modules/
+
+**/*.quarto_ipynb

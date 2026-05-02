@@ -1,0 +1,21 @@
+---
+pagetitle: "Michael Min Wah Leung"
+page-layout: full
+title-block-banner: false
+listing:
+  contents: posts
+  sort: "date desc"
+  type: default
+  categories: true
+  fields: [date, title, description, categories, reading-time]
+  feed: true
+  sort-ui: false
+  filter-ui: false
+---
+
+::: {.home-hero}
+# Michael Min Wah Leung
+Notes on post-training, sequence modelling, and the occasional brain. Code-first, results-honest, written by an ML engineer with a research background in neuroscience.
+:::
+
+## Writing

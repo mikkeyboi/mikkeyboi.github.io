@@ -1,0 +1,50 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Michael Leung"
+  description: "ML engineering, post-training, and notes from a neuroscientist-turned-modeller."
+  site-url: "https://mikkeyboi.github.io"
+  repo-url: "https://github.com/mikkeyboi/mikkeyboi.github.io"
+  repo-actions: [edit, issue]
+  open-graph: true
+  twitter-card:
+    creator: "@mikkeyboi"
+    card-style: summary_large_image
+  navbar:
+    pinned: true
+    left:
+      - href: index.qmd
+        text: Writing
+      - href: about.qmd
+        text: About
+    right:
+      - icon: rss
+        href: index.xml
+        aria-label: RSS feed
+      - icon: github
+        href: https://github.com/mikkeyboi
+        aria-label: GitHub
+  page-footer:
+    border: false
+    left: "© 2026 Michael Leung"
+    center: "[Writing](/) · [About](/about.html) · [RSS](/index.xml)"
+    right: "Built with [Quarto](https://quarto.org)."
+
+format:
+  html:
+    theme:
+      light: [cosmo, theme.scss]
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    highlight-style: github
+    fig-align: center
+    fig-cap-location: bottom
+    link-external-newwindow: true
+
+execute:
+  freeze: auto

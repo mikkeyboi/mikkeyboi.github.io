@@ -1,0 +1,251 @@
+/* =====================================================================
+   Site polish on top of Bootstrap/Cosmo + theme.scss
+   ===================================================================== */
+
+/* ---------- Layout rhythm ---------- */
+main.content,
+main.content > article {
+  max-width: 720px;
+}
+.page-layout-full main.content { max-width: none; }
+
+/* ---------- Navbar ---------- */
+.navbar {
+  border-bottom: 1px solid #e6eaef;
+  backdrop-filter: saturate(1.4) blur(8px);
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.navbar .nav-link {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* ---------- Title block ---------- */
+.quarto-title-block {
+  margin-bottom: 2.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e6eaef;
+}
+.quarto-title-block .title {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.quarto-title-block .subtitle,
+.quarto-title-block .description {
+  color: #59636e;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  margin-top: 0.5rem;
+}
+.quarto-title-meta {
+  font-size: 0.875rem;
+  color: #59636e;
+  margin-top: 1rem;
+}
+
+/* ---------- Article body ---------- */
+article p,
+article li {
+  line-height: 1.75;
+}
+article p {
+  margin-bottom: 1.15em;
+}
+article h2 {
+  margin-top: 2.5rem;
+  padding-top: 0.5rem;
+}
+article h3 {
+  margin-top: 1.75rem;
+}
+
+/* Drop cap on the lead paragraph (subtle, editorial) */
+article > p.lead::first-letter {
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 3.4rem;
+  font-weight: 500;
+  float: left;
+  line-height: 0.9;
+  padding: 0.35rem 0.5rem 0 0;
+}
+
+/* ---------- Blockquotes ---------- */
+blockquote {
+  border-left: 3px solid #d1d9e0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  color: #424a53;
+  font-style: normal;
+  margin: 1.5rem 0;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+/* ---------- Code ---------- */
+pre, code, kbd, samp {
+  font-feature-settings: "calt", "ss01";
+}
+pre {
+  border: 1px solid #e6eaef;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+:not(pre) > code {
+  background: #f3f5f7;
+  padding: 0.12em 0.38em;
+  border-radius: 4px;
+  font-size: 0.88em;
+  color: #1f2328;
+  border: 1px solid #e6eaef;
+}
+.code-copy-button {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+pre:hover .code-copy-button { opacity: 0.7; }
+pre:hover .code-copy-button:hover { opacity: 1; }
+
+/* ---------- Links ---------- */
+article a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: rgba(5, 80, 174, 0.35);
+  transition: text-decoration-color 0.15s ease;
+}
+article a:hover {
+  text-decoration-color: rgba(5, 80, 174, 1);
+}
+
+/* ---------- Tables ---------- */
+table {
+  font-size: 0.94rem;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+table th {
+  border-bottom: 2px solid #1f2328;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+}
+table td {
+  border-bottom: 1px solid #e6eaef;
+  padding: 0.5rem 0.75rem;
+}
+
+/* ---------- Callouts ---------- */
+.callout {
+  border-left-width: 4px;
+  border-radius: 6px;
+  margin: 1.5rem 0;
+}
+.callout-title { font-weight: 600; }
+
+/* ---------- Listing (home) ---------- */
+.quarto-listing-default .listing-item {
+  border-bottom: 1px solid #e6eaef;
+  padding: 1.5rem 0;
+}
+.quarto-listing-default .listing-item:last-child { border-bottom: none; }
+.listing-title a {
+  color: #1f2328;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+}
+.listing-title a:hover { color: #0550ae; }
+.listing-description {
+  color: #424a53;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  margin-top: 0.35rem;
+}
+.listing-date,
+.listing-reading-time {
+  color: #59636e;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.listing-categories .listing-category {
+  background: #f3f5f7;
+  border: 1px solid #e6eaef;
+  color: #424a53;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  margin-right: 0.35rem;
+  text-decoration: none;
+}
+.listing-categories .listing-category:hover {
+  background: #e9eef3;
+  color: #1f2328;
+}
+
+/* Hero intro on the home page */
+.home-hero {
+  padding: 2.5rem 0 2rem;
+  border-bottom: 1px solid #e6eaef;
+  margin-bottom: 1.5rem;
+}
+.home-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.6rem 0;
+}
+.home-hero p {
+  font-size: 1.15rem;
+  color: #424a53;
+  line-height: 1.55;
+  max-width: 38em;
+  margin: 0;
+}
+
+/* ---------- Footer ---------- */
+.page-footer {
+  border-top: 1px solid #e6eaef;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #59636e;
+}
+
+/* ---------- TOC (sidebar) ---------- */
+#TOC, .sidebar nav[role="doc-toc"] {
+  font-size: 0.875rem;
+}
+#TOC a, .sidebar nav[role="doc-toc"] a {
+  color: #59636e;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+#TOC a:hover, .sidebar nav[role="doc-toc"] a:hover { color: #1f2328; }
+#TOC .active, .sidebar nav[role="doc-toc"] .active {
+  color: #0550ae;
+  border-left-color: #0550ae;
+  font-weight: 500;
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: #ffe9a8;
+  color: #1f2328;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .home-hero h1 { font-size: 2rem; }
+  .home-hero p { font-size: 1.05rem; }
+  .quarto-title-block .title { font-size: 1.85rem; }
+}

@@ -1,0 +1,26 @@
+---
+title: "About"
+about:
+  template: trestles
+  links:
+    - icon: github
+      text: GitHub
+      href: https://github.com/mikkeyboi
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/michael-min-wah-leung-114b4960/
+---
+
+I'm Michael Min Wah Leung. I work on LLM post-training at Microsoft, mostly SFT, GRPO, and DPO for domain alignment of internal expert models. Before this I did graduate research in neuroscience at the University of Ottawa, on decoding multidimensional neural activity from scalp EEG and from intraoperative microelectrode recordings of deep brain structures. That work still shapes how I think about features, interpretability, and biomarkers in modern models.
+
+Earlier in my career I worked on Responsible AI tooling, including adversarial benchmarking and red-teaming for LLMs. These days I am most curious about three things:
+
+- **Reinforcement learning on language models.** Reward design, KL-anchored fine-tuning, and what GRPO and DPO actually do to model behaviour in production rather than on paper.
+- **Mechanistic interpretability.** Sparse autoencoders, circuits, and the parts of neuroscience methodology that transfer to small transformers (and the parts that don't).
+- **Sequence modelling beyond text.** Sign language, EEG, anything where the encoder gets a stream of structured features instead of tokens.
+
+This site is the long-form version of those notes. The posts are code-first and try to be honest about what worked, what didn't, and why.
+
+---
+
+*Get in touch:* see the GitHub link for issues and PRs on any post, or LinkedIn for everything else.
