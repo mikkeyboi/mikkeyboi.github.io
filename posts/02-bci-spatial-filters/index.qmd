@@ -2,7 +2,7 @@
 title: "Patient-specific filters as biomarkers"
 description: "ICA, FOOOF, and CSP for noisy EEG, and what spatial filters taught me about feature extraction in transformers."
 author: "Michael Min Wah Leung"
-date: "2026-05-02"
+date: "2026-04-30"
 date-modified: last-modified
 categories: [neuroscience, signal-processing, interpretability]
 image: images/01-pipeline.png

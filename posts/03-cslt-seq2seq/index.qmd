@@ -1,37 +1,39 @@
 ---
 title: "From consuming a pretrained model to training my own"
-description: "A Transformer Seq2Seq for continuous sign language, two training backends, and why the most useful diff in the repo is git log main..michael/cslt-model."
+description: "Building a continuous-sign-language Copilot: a Transformer Seq2Seq trained from scratch on How2Sign, two training backends, and a hybrid runtime that reaches 93.6% sentence-level recognition."
 author: "Michael Min Wah Leung"
-date: "2026-05-02"
+date: "2026-05-01"
 date-modified: last-modified
 categories: [seq2seq, sign-language, MLX, hybrid-inference]
 image: images/01-architecture.png
 draft: false
 ---
 
-## A diff stat is the cleanest way to tell this story
+## A hackathon, a partner, and a ceiling I didn't expect
 
-A hackathon team and I shipped a working ASL-to-Copilot demo on a Friday night, built around a great pretrained isolated-gloss model. By Sunday afternoon I had realised it could only ever do one sign at a time, and "Schedule a meeting with Priya next Tuesday" was structurally impossible.
+A teammate and I set out to build a sign-language Copilot for a hackathon. He owned the agent integration and tooling: Microsoft Agent Framework, the WorkIQ MCP for M365, the RAG-augmented translator that turns recognised gloss into clean English, and the Qt UI's higher-level event handling. I owned the part you don't see: the modelling and inference engine that turns webcam frames into something the agent can actually act on.
 
-The branch where I tried to fix that is +1245 / -1245 across the model and inference layer. This post is about what's in that diff: a Transformer Seq2Seq trained from scratch on How2Sign in two backends, a subtle masked-cross-entropy detail that's the difference between a model that stops talking and a model that doesn't, and a hybrid runtime that knows when to defer to the simpler model. The combination, not any single component, is what reached **93.6% sentence-level recognition** on our internal eval, where the new model alone struggles on long sentences and the old model can't attempt them at all.
+We shipped a working demo by Friday night, built around a great pretrained isolated-gloss classifier (the Kaggle 1st-place ASL TFLite model). It could recognise "hello", "thank you", "schedule" with high confidence. By Sunday afternoon I had realised it could only ever do one sign at a time. *"Schedule a meeting with Priya next Tuesday"* was structurally impossible: a pretrained isolated-gloss model has no notion of *sequence*. It recognises one sign per stable window and concatenates the recognitions post-hoc, which is a fundamentally different object from a continuous-signing decoder.
 
-## The setup
+This post is about what I did about that. It covers a Transformer Seq2Seq trained from scratch on How2Sign in two backends, a subtle masked-cross-entropy detail that's the difference between a model that stops talking and a model that doesn't, and a hybrid runtime that knows when to defer to the simpler model. The combination, not any single component, is what reached **93.6% sentence-level recognition** on our internal evaluation, where the trained model alone struggles on long sentences and the pretrained model alone can't attempt them.
 
-The pipeline is five threaded stages: webcam at ~30 FPS, MediaPipe Holistic landmarks (468 face + 21 left hand + 33 pose + 21 right hand = 543 landmarks × 3 coords per frame), an inference stage that turns landmark sequences into ASL gloss tokens, a translator that turns gloss into English with a small RAG-augmented LLM call, and a Copilot agent on top with M365 tooling. A custom event bus of bounded queues coordinates the threads and exposes a clean signing-state signal to the UI.
+## The pipeline, end to end
 
-![End-to-end architecture for the sign-language Copilot. Webcam frames are fed through MediaPipe Holistic to produce a 543-landmark stack per frame; the inference engine turns landmark sequences into gloss tokens; a RAG-augmented translator converts gloss to English; a Copilot agent with WorkIQ MCP handles M365 tasks. The model layer is the part this post focuses on.](images/01-architecture.png)
+The system is five threaded stages: webcam at ~30 FPS, MediaPipe Holistic landmarks (468 face + 21 left hand + 33 pose + 21 right hand = 543 landmarks × 3 coords per frame), an inference stage that turns landmark sequences into ASL gloss tokens, a translator that turns gloss into English with a small RAG-augmented LLM call, and a Copilot agent on top with M365 tooling. A custom event bus of bounded queues coordinates the threads and exposes a clean signing-state signal to the UI.
 
-My contribution centres on the model and inference layer. The agent integration, RAG provider, and Qt UI were teammate work, and they deserve their own write-ups.
+![End-to-end architecture for the sign-language Copilot. Webcam frames are fed through MediaPipe Holistic to produce a 543-landmark stack per frame; the inference engine turns landmark sequences into gloss tokens; a RAG-augmented translator converts gloss to English; a Copilot agent with WorkIQ MCP handles M365 tasks. The middle two stages, where modelling and inference live, are what this post focuses on.](images/01-architecture.png)
 
-## The ceiling we hit on `main`
+Two stages are mine: the inference engine and the model that drives it. The agent layer, MCP integration, RAG provider, and Qt UI are my partner's work, and they deserve their own write-ups.
 
-The `main`-branch inference engine wraps the Kaggle 1st-place ASL TFLite model: a single-sign classifier evaluated by sliding a fixed-size window over the landmark stream, smoothing the top-1 across five predictions, and only emitting a sign once it's been stable for three consecutive predictions. It's clean engineering. The threshold tuning, the idle-frame `<END>` token, the dual vocab-format dispatcher, all of it works.
+## What an isolated-gloss model can't do
 
-It's also fundamentally a one-sign-at-a-time machine. Continuous signing produces overlapping windows whose stable top-1 changes mid-phrase, and the inference engine has no notion of *sequence*. There's no way to dictate a sentence; there's only a way to recognise one isolated gloss at a time and concatenate them post-hoc. For "hello" or "thank you" this is great. For anything an actual user would want to say to a Copilot, it isn't.
+The original inference engine wraps the pretrained TFLite classifier with the obvious scaffolding: a sliding window over the landmark stream, a top-1 smoothed across five predictions, and a stability filter that only emits a sign once it's been the top-1 for three consecutive predictions. The threshold tuning, the idle-frame `<END>` token, the dual vocab-format dispatcher, all of it works.
+
+It's also fundamentally a one-sign-at-a-time machine. Continuous signing produces overlapping windows whose stable top-1 changes mid-phrase, and the inference engine has no representation of a *phrase*. There's no path from "schedule" + "meeting" + "Priya" + "next" + "Tuesday" to a coherent sentence, because the model never sees those signs as a sequence, only as five separate top-1 calls. For "hello" or "thank you" this is fine. For anything an actual user would dictate to a Copilot, it isn't.
 
 ![A short sample of the continuous-signing input the new model has to handle. Each frame is a 543-landmark stack; the *sequence* of these stacks carries the sentence-level meaning, not any single frame. A pretrained isolated-gloss classifier evaluates frame windows in isolation and has no representation of the sequence beyond a sliding aggregator on top.](images/02-landmarks.gif)
 
-## Architecture: encoder-decoder Transformer over flattened landmarks
+## A small encoder-decoder Transformer over flattened landmarks
 
 The replacement is a small encoder-decoder Transformer. The encoder consumes the 1629-dimensional flattened landmark stack per frame; the decoder produces English tokens autoregressively from a 5000-token vocabulary trained on How2Sign captions. Sizes are deliberately modest: `embed_dim=256`, `dense_dim=512`, `num_heads=4`, two encoder and two decoder layers, somewhere around 10–11M parameters. The intent isn't SOTA on How2Sign; it's a model small enough to overfit gracefully on a hackathon budget while still being a structurally honest sequence-to-sequence model.
 
@@ -54,21 +56,21 @@ mask = (targets != 0)
 mask = (targets != 0) | (mx.roll(targets, 1, axis=1) != 0)
 ```
 
-It's a one-line difference in the loss function. Catching it took a wasted training run and a confused afternoon staring at sample outputs. It's the kind of subtle bug that doesn't show up in a unit test and only surfaces when you actually look at what the trained model produces. I include it here because it's representative of the class of problem this branch solved: not "import the right HF class", but "make teacher-forced training do what teacher-forced training is supposed to do".
+It's a one-line difference in the loss function. Catching it took a wasted training run and a confused afternoon staring at sample outputs. It's the kind of subtle bug that doesn't show up in a unit test and only surfaces when you actually look at what the trained model produces. I include it here because it's representative of the class of problem this work surfaced: not "import the right HF class", but "make teacher-forced training do what teacher-forced training is supposed to do".
 
 ## Two backends, one architecture
 
 The same model is implemented twice: once in Keras, once in Apple MLX. The MLX path is what I used to actually train, on Apple Silicon, with a `@mx.compile`'d step and an async batch prefetcher built on `concurrent.futures` that keeps the GPU fed during data preparation. The Keras path is what runs by default if MLX weights aren't available, and it's also what the data pipeline (`How2SignDataset`) uses, with a manual upfront vectorisation step that works around a macOS TF threading deadlock that ate a non-trivial amount of debugging time.
 
-The dual-backend setup wasn't theoretical. It's what made it possible to train the model at all on the hardware I had, and it's what made the model portable enough to ship inside the existing Qt application.
+The dual-backend setup wasn't theoretical. It's what made it possible to train the model at all on the hardware I had during the hackathon, and it's what made the model portable enough to ship inside the Qt application my partner had built the agent integration on top of.
 
 ## Hybrid inference: the runtime as a model decision
 
 Here's where the engineering ends up doing more than the model alone can.
 
-The new model is genuinely good at continuous sentences and genuinely bad at the kind of short conversational gestures ("hello", "thank you") that aren't well-represented in How2Sign. The old isolated-gloss model has the opposite profile. The right move isn't to pick one. It's to dispatch.
+The trained Seq2Seq is genuinely good at continuous sentences and genuinely weak on the kind of short conversational gestures ("hello", "thank you") that aren't well-represented in How2Sign. The pretrained isolated-gloss model has the opposite profile. The right move isn't to pick one. It's to dispatch.
 
-The new `_decode_sequence` is a hybrid: if the frame buffer holds fewer than 16 frames, fall back to the isolated TFLite classifier; if it holds 16 or more, run autoregressive Seq2Seq decode on the trained model. The 16-frame threshold is roughly half a second of signing at 30 FPS, which empirically separates "single sign" from "phrase". Both models share the MediaPipe-Holistic frontend, so the dispatcher is purely a buffer-length decision.
+The inference engine became a hybrid: if the frame buffer holds fewer than 16 frames, fall back to the isolated TFLite classifier; if it holds 16 or more, run autoregressive Seq2Seq decode on the trained model. The 16-frame threshold is roughly half a second of signing at 30 FPS, which empirically separates "single sign" from "phrase". Both models share the MediaPipe-Holistic frontend, so the dispatcher is purely a buffer-length decision.
 
 This gets framed as engineering taste, but it's actually a *modelling* choice. The same way mixture-of-experts gating, retrieval-augmented vs. parametric, and small-model-as-router-for-large-model patterns are modelling choices. The right phrasing is: don't make one model do two jobs when the runtime can choose between two specialists.
 
@@ -82,7 +84,7 @@ A standalone Transformer Seq2Seq trained on a hackathon budget on How2Sign isn't
 
 What changes is what the *pipeline* achieves once the trained model is composed with the Qt threading layer's temporal sliding window and the isolated-gloss fallback. End-to-end, on our internal evaluation of conversational signing scenarios, the composed system reached **93.6% sentence-level recognition**. The split of where that number comes from is roughly: short-burst gestures handled by the fallback (high precision, narrow scope), continuous phrases handled by the Seq2Seq with sliding-window temporal smoothing on top, and the dispatcher choosing between them on a buffer-length signal that's empirically clean.
 
-The reason I'd publish that number, and the reason it's a useful signal rather than a vanity metric, is that none of the three components reaches it on its own. The model alone is in the figure above. The fallback alone tops out wherever isolated-gloss accuracy tops out and can't say sentences. The dispatcher alone is twenty lines of buffer-length logic. The composition is what works, and the composition is where the engineering taste lives.
+The reason that number is a useful signal rather than a vanity metric is that none of the three components reaches it on its own. The model alone is in the figure above. The fallback alone tops out wherever isolated-gloss accuracy tops out and can't say sentences. The dispatcher alone is twenty lines of buffer-length logic. The composition is what works, and the composition is where the engineering taste lives.
 
 Honest negatives, since this isn't a paper:
 
@@ -92,7 +94,7 @@ Honest negatives, since this isn't a paper:
 
 ## The wider point
 
-`main` shipped a UI around someone else's model. This branch shipped a model. Both were the right call at their moment. The interesting work was in the *transition*: recognising the pretrained model's ceiling, designing a different architecture, training it in two backends, getting the masked-CE detail right, and engineering the runtime that lets the two models coexist instead of replacing one with the other.
+The first version of the system shipped a UI around someone else's model. The version that actually worked for continuous signing required training a different model. Both were the right call at their moment. The interesting work was in the *transition*: recognising the pretrained model's ceiling, designing a different architecture, training it in two backends, getting the masked-CE detail right, and engineering the runtime that lets the two models coexist instead of replacing one with the other.
 
 That loop, see-the-ceiling, design, train, integrate, is what I want to spend the next decade doing. Most of the time, in production, it'll happen at smaller resolution than this; sometimes at much larger. The pattern is the same.
 
@@ -101,8 +103,8 @@ That loop, see-the-ceiling, design, train, integrate, is what I want to spend th
 - **Connectionist Temporal Classification** as an alternative training objective. Teacher forcing isn't the right inductive bias for a problem where the input and output stream lengths are decoupled and there's no natural alignment.
 - **Beam search at decode**, with length normalisation. Greedy autoregressive decode is leaving recall on the table, especially on phrases where one early token error cascades.
 - **Speaker-conditional encoder.** Conditioning on a small per-signer embedding learned from a calibration sequence would close most of the cross-signer drift.
-- **Encoder pretraining on raw ASL video.** The current encoder learns from labeled translation pairs only, which is a tiny slice of the available signal. A self-supervised pretraining stage on unlabeled signing video, masking or contrastive, is the obvious unlock.
+- **Encoder pretraining on raw ASL video.** The current encoder learns from labelled translation pairs only, which is a tiny slice of the available signal. A self-supervised pretraining stage on unlabelled signing video, masking or contrastive, is the obvious unlock.
 
 ---
 
-*The repository is a hackathon collaboration; the branch under discussion is `michael/cslt-model`. Credit to the hackathon team for the agent integration, RAG provider, and UI; my contribution centres on the model and inference layer. How2Sign is a CMU-released dataset under CC-BY-NC-4.0; trained weights derived from it are subject to the dataset's non-commercial terms.*
+*Hackathon collaboration. Credit to my teammate for the agent integration, MCP work, RAG provider, and Qt UI scaffolding; my contribution centres on the modelling and inference layer described above. How2Sign is a CMU-released dataset under CC-BY-NC-4.0; trained weights derived from it are subject to the dataset's non-commercial terms.*
