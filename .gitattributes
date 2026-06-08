@@ -1,0 +1,15 @@
+# Normalize all text files to LF in the repo; prevents CRLF churn from
+# Windows-side edits showing up as full-file diffs.
+* text=auto eol=lf
+
+# Explicit binary types (never touch line endings)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
