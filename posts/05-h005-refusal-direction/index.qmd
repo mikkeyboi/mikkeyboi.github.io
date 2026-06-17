@@ -178,6 +178,7 @@ rates and the figure above, never generated text.
 *Companion code is a runnable reproduction on a synthetic planted-direction model
 (no GPU, no harmful content), with an optional `--real` mode that discovers the
 difference-of-means direction on a chat model's activations: see the
-`h005_refusal_direction` sample. I am still early in this area, so if you work on
+[`h005_refusal_direction` sample](https://github.com/mikkeyboi/mechinterp-samples/tree/main/samples/h005_refusal_direction).
+I am still early in this area, so if you work on
 steering or refusal and see somewhere I have over-read the evidence, I would value the
 correction.*
