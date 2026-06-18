@@ -85,8 +85,9 @@ nothing either. You have to *compose* the two. A linear model over token identit
 (a bag-of-tokens baseline) provably cannot represent XOR, and indeed it scores at
 chance. 192 training prompts, 64 held-out.
 
-This is the same move I used to make a hundred times on neural data, for the same
-reason, which I will come back to.
+This is the same move a good measurement pipeline makes in any setting with an
+obvious shortcut: choose a contrast where the shortcut cancels before asking the
+model what it computed.
 
 The blue curve is the payoff. Layer 0, the embedding: **0.500, exactly chance**. The
 composed concept is simply not there in the input. Then it climbs, layer by layer,
@@ -130,22 +131,18 @@ tell which was to look at the shape.
 
 ## The same confound, in a different signal
 
-I spent my graduate years decoding EEG, and this is a confound I know in my bones.
-A linear decoder that classifies brain states perfectly can be reading something
-upstream of the thing you care about: an eye-movement artifact, off-band drift,
-electrode impedance that happens to correlate with your condition. The decoder is
-real; the accuracy is real; the *interpretation* is wrong. The fix in EEG is to
-close the trivial route by design (re-reference, regress out the artifact, choose a
-contrast where the confound cancels), and then a decoder that still works is telling
-you about cortex.
+This pattern is not specific to transformers. A linear decoder can succeed for a
+reason upstream of the target mechanism: a shortcut feature, an artifact, or a
+background variable that happens to correlate with the label. The decoder is real;
+the accuracy is real; the *interpretation* is wrong. The fix is to close the
+trivial route by design, then ask whether the decoder still works.
 
-A probe at layer 0 is the same diagnostic as a CSP scalp topology that lights up
-over the temples instead of motor cortex. Both are cheap sanity checks that catch
-your classifier succeeding for the wrong reason. In EEG I trusted the topology more
-than the accuracy. In a transformer I now trust the *shape of the depth curve* more
-than the best-layer number. The XOR redesign is the interpretability version of
-choosing a contrast where the artifact cancels: it forces the model to actually
-compute the thing, so that when the probe succeeds, the success is about the model.
+A probe at layer 0 is that diagnostic in transformer form. It catches the case
+where the classifier is reading the input representation rather than the model's
+computation. For this kind of probing, I now trust the *shape of the depth curve*
+more than the best-layer number. The XOR redesign forces the model to actually
+combine two pieces of information, so when the probe succeeds, the success is about
+something the model had to build.
 
 ## What this taught me
 
