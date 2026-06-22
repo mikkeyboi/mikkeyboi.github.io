@@ -142,8 +142,17 @@ respects.
   I read this as a bounded negative, not as "refusal is one-dimensional." It says the
   cheap second direction did not add *binary harmful-refusal suppression* here. Maskey
   et al. 2026 locate the higher-dimensional part in over-refusal, where safe prompts
-  resemble harmful ones. That is a different arm from the suppression test above, and
-  still the right place to look if the next question is multi-dimensional refusal.
+  resemble harmful ones. That is a different arm from the suppression test above.
+
+  I have since run that over-refusal addition arm too, using benign-but-scary
+  FalseReject prompts. The global over-refusal direction was distinct from d1 and beat
+  the random orthogonal control, but it missed the pre-set add-margin past d1 alone:
+  on the primary seed at the headline dose, +d1 raised safe-target refusal to 0.60,
+  +{d1,d_over} to 0.81, and +{d1,control} to 0.56. A second seed gave the same verdict.
+  I read that as
+  another bounded negative, this time for a global single-layer d_over, not as closure.
+  The next useful probe is more specific: fit the over-refusal direction by task
+  category rather than averaging all scary-looking prompts together.
 - **The readout is coarse.** A substring classifier only sees whether a completion
   opens with a refusal phrase. I trust the direction of a large, control-beating shift;
   I would not read anything into a small one, and a more careful refusal judgement
