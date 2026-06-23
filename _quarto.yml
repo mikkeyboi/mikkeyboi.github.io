@@ -1,6 +1,8 @@
 project:
   type: website
   output-dir: _site
+  resources:
+    - playground/widgets/*.mjs
 
 website:
   title: "Michael Leung"
@@ -17,6 +19,8 @@ website:
     left:
       - href: index.qmd
         text: Writing
+      - href: playground/index.qmd
+        text: Playground
       - href: about.qmd
         text: About
     right:
@@ -29,7 +33,7 @@ website:
   page-footer:
     border: false
     left: "© 2026 Michael Leung"
-    center: "[Writing](/) · [About](/about.html) · [RSS](/index.xml)"
+    center: "[Writing](/) · [Playground](/playground/) · [About](/about.html) · [RSS](/index.xml)"
     right: "Built with [Quarto](https://quarto.org)."
 
 format:

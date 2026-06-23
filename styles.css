@@ -249,3 +249,136 @@ table td {
   .home-hero p { font-size: 1.05rem; }
   .quarto-title-block .title { font-size: 1.85rem; }
 }
+
+/* ---------- Interactive OJS widgets (H005 refusal-direction sim) ---------- */
+/* Observable Inputs + Plot, scoped so they read as figures, not raw form controls. */
+.cell .ojs-in-a-box-waiting-for-module { min-height: 0; }
+
+/* Control rows: tighter labels, sit them in a soft panel */
+.cell > form {
+  margin: 0.35rem 0;
+}
+.cell > form label {
+  font-size: 0.9rem;
+  color: #424a53;
+}
+
+/* The worked-examples table emitted by the toy demo */
+table.toy-examples {
+  font-size: 0.86rem;
+  width: 100%;
+  margin: 1rem 0 0.5rem;
+}
+table.toy-examples th {
+  border-bottom: 2px solid #1f2328;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+}
+table.toy-examples td {
+  border-bottom: 1px solid #e6eaef;
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+table.toy-examples td code {
+  background: #f3f5f7;
+  border: 1px solid #e6eaef;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.92em;
+}
+/* The graded model-response cell: readable prose, not code, with room to wrap. */
+table.toy-examples td.toy-completion {
+  color: #424a53;
+  line-height: 1.45;
+  min-width: 16rem;
+}
+table.toy-examples td.toy-completion code {
+  font-size: 0.86em;
+}
+
+/* Plot figures: center, cap width so they sit in the reading column */
+.cell svg[class^="plot-"] {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Playground page + shared sim widget ---------- */
+.sim-scenarios {
+  background: #f6f8fa;
+  border: 1px solid #e6eaef;
+  border-radius: 8px;
+  padding: 1rem 1.25rem 1rem 1.25rem;
+  margin: 1.25rem 0 1.75rem;
+}
+.sim-scenarios-title {
+  font-weight: 650;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #59636e;
+  margin-bottom: 0.5rem;
+}
+.sim-scenarios ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.sim-scenarios li {
+  margin: 0.35rem 0;
+  line-height: 1.55;
+}
+
+/* The mounted widget: controls in a soft panel, output below. */
+.sim-mount {
+  margin: 0.5rem 0 1rem;
+}
+.sim-widget-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding: 1rem 1.1rem;
+  background: #fbfcfd;
+  border: 1px solid #e6eaef;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+.sim-widget-controls label {
+  font-size: 0.9rem;
+  color: #424a53;
+}
+.sim-widget-output .sim-widget-rate,
+.sim-widget-output .sim-widget-note {
+  line-height: 1.6;
+}
+.sim-widget-note {
+  color: #424a53;
+  font-size: 0.95rem;
+}
+.sim-readmore {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e6eaef;
+  font-weight: 500;
+}
+/* Simulation picker: wide enough not to clip the longest title. */
+.quarto-container form select,
+.cell form select {
+  min-width: 20rem;
+}
+
+/* Jump-to-simulation callout used inside posts. */
+.sim-jump {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f6f8fa;
+  border: 1px solid #e6eaef;
+  border-left: 4px solid #0550ae;
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+.sim-jump a { font-weight: 600; }

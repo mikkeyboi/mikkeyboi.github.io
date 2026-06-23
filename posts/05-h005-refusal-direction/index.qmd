@@ -6,6 +6,8 @@ date: "2026-06-17"
 date-modified: last-modified
 categories: [interpretability, safety, steering, transformers]
 image: images/h005_refusal_real_qwen2.5-1.5b.png
+resources:
+  - h005_real_metrics.json
 draft: false
 ---
 
@@ -27,6 +29,10 @@ what I measured, what one of the two models I tried could not tell me, and how f
 think the measurements license me to go. I am newer to interpretability than to the
 signal-processing it borrows from, so I have tried to keep the claims close to the
 evidence and to flag where I am inferring rather than measuring.
+
+::: {.sim-jump}
+Prefer to poke at it first? Jump to the <a href="#see-it-move">interactive simulation</a> further down, or open it on the <a href="/playground/" target="_self">playground</a>.
+:::
 
 ## The procedure
 
@@ -172,6 +178,153 @@ about safety in general from one 1.5B model, but it is at least suggestive that 
 behaviour can present as robust in text while resting on a low-dimensional and
 editable feature, and that seems worth understanding whether the goal is to defend the
 behaviour or to interpret it.
+
+## See it move
+
+The numbers above are static; the mechanism is not. Below are two interactive
+views of it. Neither runs a real language model in your browser, and I want to be
+exact about what each one is, because the gap between them is part of the point.
+
+The first is the **measured evidence** from this post, made explorable: the held-out
+refusal rates I actually recorded on Qwen2.5-1.5B-Instruct and Gemma 3 1B, nothing
+generated live. The second is a **toy** whose refusal is, by construction, one known
+direction, the same synthetic planted-direction model the companion code ships. The
+toy is where you can turn the knobs, because it is honest to turn them: there is no
+real weight or harmful prompt anywhere in it, only synthetic activations and canned
+phrases. What carries over from the toy to the real model is the *shape* of the
+result, not any specific number.
+
+::: {.callout-note collapse="true"}
+## What is and isn't real here
+
+Real 1.5B inference with live residual-stream edits will not run client-side, and
+nobody should download multi-gigabyte weights to read a blog post. So the **measured
+view replays committed metrics** (traceable to the evidence ledger), and the **toy
+view computes a 64-dimensional synthetic model live** in your browser. The toy keeps
+the same discipline as the real pipeline: it shows refusal *rates* and direction
+*geometry*, and it never displays a real harmful completion, only its own canned
+strings.
+:::
+
+### The measured result
+
+This is the data behind the figure earlier in the post. Pick a model and an arm. The
+bars are held-out refusal rates; the **fitted** direction is the difference-of-means
+refusal direction, the **random control** is a norm-matched random vector. A real
+single-direction effect is the fitted bar clearing the control bar by the
+pre-registered margin in *both* arms.
+
+```{ojs}
+//| echo: false
+metrics = FileAttachment("h005_real_metrics.json").json()
+```
+
+```{ojs}
+//| echo: false
+viewof realModel = Inputs.radio(
+  new Map([
+    ["Qwen2.5-1.5B-Instruct", "qwen2.5-1.5b"],
+    ["Gemma 3 1B-it", "gemma-3-1b"]
+  ]),
+  { label: "Model", value: "qwen2.5-1.5b" }
+)
+```
+
+```{ojs}
+//| echo: false
+viewof realArm = Inputs.radio(
+  new Map([
+    ["Suppression — ablate, harmful prompts", "suppress"],
+    ["Induction — add, harmless prompts", "induce"]
+  ]),
+  { label: "Arm", value: "suppress" }
+)
+```
+
+```{ojs}
+//| echo: false
+realRows = {
+  const m = metrics.models[realModel];
+  const base = realArm === "suppress" ? m.baseline_harmful_refusal : m.baseline_harmless_refusal;
+  const fit = realArm === "suppress" ? m.ablation_harmful_refusal_real : m.addition_harmless_refusal_real;
+  const ctl = realArm === "suppress" ? m.ablation_harmful_refusal_control : m.addition_harmless_refusal_control;
+  const verb = realArm === "suppress" ? "ablate" : "add";
+  return [
+    { cond: "baseline", rate: base, kind: "baseline" },
+    { cond: `${verb} fitted`, rate: fit, kind: "fitted" },
+    { cond: `${verb} control`, rate: ctl, kind: "control" }
+  ];
+}
+```
+
+```{ojs}
+//| echo: false
+Plot.plot({
+  marginLeft: 90,
+  marginRight: 36,
+  marginBottom: 40,
+  height: 220,
+  x: { domain: [0, 1.08], label: realArm === "suppress" ? "refusal rate (harmful prompts) →" : "refusal rate (harmless prompts) →", grid: true, ticks: [0, 0.2, 0.4, 0.6, 0.8, 1] },
+  y: { label: null },
+  color: {
+    domain: ["baseline", "fitted", "control"],
+    range: ["#9aa4ae", "#0550ae", "#c7d6ea"]
+  },
+  marks: [
+    Plot.barX(realRows, { y: "cond", x: "rate", fill: "kind", sort: { y: null } }),
+    Plot.text(realRows, { y: "cond", x: "rate", text: d => d.rate.toFixed(2), dx: 16, fontVariant: "tabular-nums", textAnchor: "start" }),
+    Plot.ruleX([0])
+  ]
+})
+```
+
+```{ojs}
+//| echo: false
+md`${(() => {
+  const m = metrics.models[realModel];
+  const v = m.verdict;
+  if (v === "NO-BASELINE-REFUSAL")
+    return `**Verdict on ${m.label}: NO-BASELINE-REFUSAL.** Baseline harmful refusal was ${m.baseline_harmful_refusal.toFixed(2)}, below the ${metrics.margins.min_baseline_refusal} floor I set in advance, so this model cannot tell me whether the direction is causal — the instrument has nothing to suppress. That null is the Gemma lesson, not a tuning failure.`;
+  return `**Verdict on ${m.label}: SINGLE-DIRECTION-REPRODUCES** (layer ${m.selected_layer}, ${m.n_test_per_class} held-out prompts per class, reproduced on a second seed). In both arms the fitted direction clears the norm-matched control by the pre-registered margin; erasing or adding a *random* vector of the same size does neither.`;
+})()}`
+```
+
+### The toy you can steer
+
+Now the synthetic model. Its refusal is genuinely one-dimensional: it refuses a
+prompt exactly when that prompt's activation projects past a threshold $\theta$ onto
+one planted axis. Difference-of-means recovers that axis without being told it; the
+controls below let you watch the intervention act on the decision variable directly.
+
+The histogram is the held-out test cloud projected onto the model's true refusal
+axis, **before** (faint) and **after** (solid) the intervention. The dashed line is
+$\theta$: everything to its right refuses. Switch *direction* to the random control
+and the cloud stops moving, which is the whole reason the control exists.
+
+```{ojs}
+//| echo: false
+// The toy widget is the SAME factory the /playground page mounts — one source of
+// truth for both surfaces (math in refusal_sim.mjs, presentation in
+// refusal_widget.mjs). Root-absolute import so it resolves regardless of which
+// page mounts it. This is an expression cell (not a named assignment) so OJS
+// displays the returned DOM node exactly once — a second bare `cell` reference
+// would re-inspect the already-adopted node and print "HTMLDivElement {}".
+{
+  const [simMod, widgetMod] = await Promise.all([
+    import("/playground/widgets/refusal_sim.mjs"),
+    import("/playground/widgets/refusal_widget.mjs")
+  ]);
+  const container = html`<div class="sim-mount"></div>`;
+  widgetMod.renderRefusalToy(container, { Inputs, Plot, html, sim: simMod });
+  return container;
+}
+```
+
+The toy makes a clean positive look easy. The measured view is the reminder that it
+is not: the same procedure returned NO-BASELINE-REFUSAL on Gemma, and the follow-up
+arms (the second-direction and over-refusal addenda below) are bounded negatives. The
+interactive is here to build intuition for the mechanism, not to upgrade a 1.5B
+reproduction into a claim about refusal in general.
 
 I have kept the companion code scoped to the interpretability question rather than the
 manipulation. It runs on a synthetic planted-direction model by default, with no real
