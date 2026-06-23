@@ -2,6 +2,7 @@
 /_site/
 /_freeze/
 *.html
+!_includes/*.html
 .DS_Store
 .ipynb_checkpoints/
 .venv/

@@ -40,6 +40,7 @@ format:
   html:
     theme:
       light: [cosmo, theme.scss]
+      dark: [cosmo, theme-dark.scss]
     css: styles.css
     toc: true
     toc-depth: 3
@@ -49,6 +50,8 @@ format:
     fig-align: center
     fig-cap-location: bottom
     link-external-newwindow: true
+    include-in-header:
+      - _includes/posthog.html
 
 execute:
   freeze: auto

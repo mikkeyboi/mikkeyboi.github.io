@@ -15,11 +15,24 @@
 // which is what lets the playground mount/unmount widgets on a dropdown — a thing
 // Quarto's `viewof` cells cannot do.
 
+// Badge colours per help tier, light + dark. [label, fg, bg] each mode.
 const TIER_BADGE = {
-  full: ["full help", "#1a7f37", "#dafbe1"],
-  hedged: ["hedged", "#9a6700", "#fff8c5"],
-  refused: ["refused", "#cf222e", "#ffebe9"],
+  full: { label: "full help", light: ["#1a7f37", "#dafbe1"], dark: ["#7ee2a8", "#13321f"] },
+  hedged: { label: "hedged", light: ["#9a6700", "#fff8c5"], dark: ["#e8c45a", "#3a2f0a"] },
+  refused: { label: "refused", light: ["#cf222e", "#ffebe9"], dark: ["#ff8a8a", "#3a1416"] },
 };
+
+// Plot palette per mode — the histogram fills, the theta rule, axis text.
+const PLOTS = {
+  light: { before: "#9ec1e8", after: "#0550ae", rule: "#b54708", text: "#1f2328", axis: "#59636e" },
+  dark: { before: "#3b6ea5", after: "#79b1ff", rule: "#f0883e", text: "#e6edf3", axis: "#9198a1" },
+};
+
+// True when Quarto's dark toggle is active (it sets .quarto-dark on <html>/<body>).
+function isDark() {
+  return document.documentElement.classList.contains("quarto-dark") ||
+    document.body.classList.contains("quarto-dark");
+}
 
 export function renderRefusalToy(container, { Inputs, Plot, html, sim, defaults = {} }) {
   container.innerHTML = "";
@@ -49,8 +62,9 @@ export function renderRefusalToy(container, { Inputs, Plot, html, sim, defaults 
   container.append(controls, output);
 
   const badge = (tier) => {
-    const [label, fg, bg] = TIER_BADGE[tier];
-    return html`<span style="display:inline-block;padding:0.1em 0.6em;border-radius:999px;font-size:0.8em;font-weight:600;color:${fg};background:${bg};white-space:nowrap">${label}</span>`;
+    const t = TIER_BADGE[tier];
+    const [fg, bg] = isDark() ? t.dark : t.light;
+    return html`<span style="display:inline-block;padding:0.1em 0.6em;border-radius:999px;font-size:0.8em;font-weight:600;color:${fg};background:${bg};white-space:nowrap">${t.label}</span>`;
   };
 
   function renderOutput() {
@@ -71,17 +85,19 @@ export function renderRefusalToy(container, { Inputs, Plot, html, sim, defaults 
       ...toy.projAfter.map((v) => ({ v, phase: "after" })),
     ];
 
+    const pal = isDark() ? PLOTS.dark : PLOTS.light;
     const plot = Plot.plot({
       height: 260,
       marginLeft: 50,
       marginTop: 28,
+      style: { background: "transparent", color: pal.axis },
       x: { label: "projection onto the refusal axis →", grid: true },
       y: { label: "count" },
-      color: { legend: true, domain: ["before", "after"], range: ["#9ec1e8", "#0550ae"] },
+      color: { legend: true, domain: ["before", "after"], range: [pal.before, pal.after] },
       marks: [
         Plot.rectY(hist, Plot.binX({ y: "count" }, { x: "v", fill: "phase", fillOpacity: 0.6, thresholds: 36 })),
-        Plot.ruleX([toy.theta], { stroke: "#b54708", strokeDasharray: "4 3", strokeWidth: 1.5 }),
-        Plot.text([{ x: toy.theta }], { x: "x", text: ["θ — refuse →"], dy: -14, dx: 5, fill: "#b54708", textAnchor: "start", frameAnchor: "top" }),
+        Plot.ruleX([toy.theta], { stroke: pal.rule, strokeDasharray: "4 3", strokeWidth: 1.5 }),
+        Plot.text([{ x: toy.theta }], { x: "x", text: ["θ — refuse →"], dy: -14, dx: 5, fill: pal.rule, textAnchor: "start", frameAnchor: "top" }),
         Plot.ruleY([0]),
       ],
     });
@@ -118,6 +134,13 @@ export function renderRefusalToy(container, { Inputs, Plot, html, sim, defaults 
     inp.addEventListener("input", renderOutput);
   }
   renderOutput();
+
+  // Re-render when the user toggles dark mode (Quarto flips .quarto-dark on the
+  // root), so the plot fills + badges pick up the new palette. Observe class
+  // changes on <html> and <body>.
+  const themeObserver = new MutationObserver(() => renderOutput());
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
   return { rerender: renderOutput };
 }

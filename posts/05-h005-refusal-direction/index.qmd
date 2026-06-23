@@ -221,6 +221,29 @@ metrics = FileAttachment("h005_real_metrics.json").json()
 
 ```{ojs}
 //| echo: false
+// Reactive dark-mode flag: emits whenever Quarto flips .quarto-dark on the root,
+// so the bar chart below recolours when the theme toggles.
+darkMode = {
+  const read = () => document.documentElement.classList.contains("quarto-dark") || document.body.classList.contains("quarto-dark");
+  return Generators.observe((notify) => {
+    notify(read());
+    const obs = new MutationObserver(() => notify(read()));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+realPalette = darkMode
+  ? { baseline: "#6b7480", fitted: "#79b1ff", control: "#34465e", axis: "#9198a1" }
+  : { baseline: "#9aa4ae", fitted: "#0550ae", control: "#c7d6ea", axis: "#59636e" }
+```
+
+```{ojs}
+//| echo: false
 viewof realModel = Inputs.radio(
   new Map([
     ["Qwen2.5-1.5B-Instruct", "qwen2.5-1.5b"],
@@ -264,11 +287,12 @@ Plot.plot({
   marginRight: 36,
   marginBottom: 40,
   height: 220,
+  style: { background: "transparent", color: realPalette.axis },
   x: { domain: [0, 1.08], label: realArm === "suppress" ? "refusal rate (harmful prompts) →" : "refusal rate (harmless prompts) →", grid: true, ticks: [0, 0.2, 0.4, 0.6, 0.8, 1] },
   y: { label: null },
   color: {
     domain: ["baseline", "fitted", "control"],
-    range: ["#9aa4ae", "#0550ae", "#c7d6ea"]
+    range: [realPalette.baseline, realPalette.fitted, realPalette.control]
   },
   marks: [
     Plot.barX(realRows, { y: "cond", x: "rate", fill: "kind", sort: { y: null } }),
