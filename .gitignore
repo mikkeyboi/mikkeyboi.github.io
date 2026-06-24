@@ -2,6 +2,7 @@
 /_site/
 /_freeze/
 *.html
+!_includes/*.html
 .DS_Store
 .ipynb_checkpoints/
 .venv/
@@ -9,3 +10,7 @@ __pycache__/
 node_modules/
 
 **/*.quarto_ipynb
+
+# Quarto preview logs (local only)
+.quarto-preview.log
+.quarto-preview.err.log

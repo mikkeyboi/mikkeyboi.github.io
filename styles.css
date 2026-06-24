@@ -2,6 +2,44 @@
    Site polish on top of Bootstrap/Cosmo + theme.scss
    ===================================================================== */
 
+/* ---------- Theme tokens ----------
+   One palette, two modes. Light values live on :root; .quarto-dark (the class
+   Quarto puts on <body> in dark mode) overrides them. Every custom colour below
+   references a token, so the light/dark switch is driven entirely from here. */
+:root {
+  --ink: #1f2328;            /* primary text / strong borders */
+  --ink-2: #424a53;          /* secondary text */
+  --muted: #59636e;          /* muted / meta text */
+  --border: #e6eaef;         /* hairline borders */
+  --border-strong: #d1d9e0;  /* blockquote / heavier rule */
+  --panel: #f6f8fa;          /* soft panel background */
+  --panel-2: #fbfcfd;        /* lighter panel (controls) */
+  --code-inline-bg: #f3f5f7; /* inline code / chips */
+  --accent: #0550ae;         /* links / active accent */
+  --accent-rgb: 5, 80, 174;  /* for rgba() underlines */
+  --navbar-bg: rgba(255, 255, 255, 0.85);
+  --selection-bg: #ffe9a8;
+  --selection-fg: #1f2328;
+  --chip-hover-bg: #e9eef3;
+}
+
+.quarto-dark {
+  --ink: #e6edf3;
+  --ink-2: #c9d1d9;
+  --muted: #9198a1;
+  --border: #2a2f37;
+  --border-strong: #3a414b;
+  --panel: #161b22;
+  --panel-2: #11151b;
+  --code-inline-bg: #1b2129;
+  --accent: #589bff;
+  --accent-rgb: 88, 155, 255;
+  --navbar-bg: rgba(13, 17, 23, 0.85);
+  --selection-bg: #2d4a7c;
+  --selection-fg: #e6edf3;
+  --chip-hover-bg: #222a35;
+}
+
 /* ---------- Layout rhythm ---------- */
 main.content,
 main.content > article {
@@ -11,9 +49,9 @@ main.content > article {
 
 /* ---------- Navbar ---------- */
 .navbar {
-  border-bottom: 1px solid #e6eaef;
+  border-bottom: 1px solid var(--border);
   backdrop-filter: saturate(1.4) blur(8px);
-  background-color: rgba(255, 255, 255, 0.85) !important;
+  background-color: var(--navbar-bg) !important;
 }
 .navbar-brand {
   font-weight: 600;
@@ -28,7 +66,7 @@ main.content > article {
 .quarto-title-block {
   margin-bottom: 2.25rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid #e6eaef;
+  border-bottom: 1px solid var(--border);
 }
 .quarto-title-block .title {
   font-weight: 700;
@@ -37,14 +75,14 @@ main.content > article {
 }
 .quarto-title-block .subtitle,
 .quarto-title-block .description {
-  color: #59636e;
+  color: var(--muted);
   font-size: 1.1rem;
   line-height: 1.55;
   margin-top: 0.5rem;
 }
 .quarto-title-meta {
   font-size: 0.875rem;
-  color: #59636e;
+  color: var(--muted);
   margin-top: 1rem;
 }
 
@@ -76,9 +114,9 @@ article > p.lead::first-letter {
 
 /* ---------- Blockquotes ---------- */
 blockquote {
-  border-left: 3px solid #d1d9e0;
+  border-left: 3px solid var(--border-strong);
   padding: 0.25rem 0 0.25rem 1.25rem;
-  color: #424a53;
+  color: var(--ink-2);
   font-style: normal;
   margin: 1.5rem 0;
 }
@@ -89,7 +127,7 @@ pre, code, kbd, samp {
   font-feature-settings: "calt", "ss01";
 }
 pre {
-  border: 1px solid #e6eaef;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem 1.1rem;
   font-size: 0.875rem;
@@ -97,12 +135,12 @@ pre {
   overflow-x: auto;
 }
 :not(pre) > code {
-  background: #f3f5f7;
+  background: var(--code-inline-bg);
   padding: 0.12em 0.38em;
   border-radius: 4px;
   font-size: 0.88em;
-  color: #1f2328;
-  border: 1px solid #e6eaef;
+  color: var(--ink);
+  border: 1px solid var(--border);
 }
 .code-copy-button {
   opacity: 0;
@@ -116,11 +154,11 @@ article a {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
-  text-decoration-color: rgba(5, 80, 174, 0.35);
+  text-decoration-color: rgba(var(--accent-rgb), 0.35);
   transition: text-decoration-color 0.15s ease;
 }
 article a:hover {
-  text-decoration-color: rgba(5, 80, 174, 1);
+  text-decoration-color: rgba(var(--accent-rgb), 1);
 }
 
 /* ---------- Tables ---------- */
@@ -130,13 +168,13 @@ table {
   margin: 1.5rem 0;
 }
 table th {
-  border-bottom: 2px solid #1f2328;
+  border-bottom: 2px solid var(--ink);
   font-weight: 600;
   text-align: left;
   padding: 0.5rem 0.75rem;
 }
 table td {
-  border-bottom: 1px solid #e6eaef;
+  border-bottom: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
 }
 
@@ -150,36 +188,36 @@ table td {
 
 /* ---------- Listing (home) ---------- */
 .quarto-listing-default .listing-item {
-  border-bottom: 1px solid #e6eaef;
+  border-bottom: 1px solid var(--border);
   padding: 1.5rem 0;
 }
 .quarto-listing-default .listing-item:last-child { border-bottom: none; }
 .listing-title a {
-  color: #1f2328;
+  color: var(--ink);
   text-decoration: none;
   font-weight: 600;
   font-size: 1.25rem;
   letter-spacing: -0.015em;
 }
-.listing-title a:hover { color: #0550ae; }
+.listing-title a:hover { color: var(--accent); }
 .listing-description {
-  color: #424a53;
+  color: var(--ink-2);
   font-size: 0.98rem;
   line-height: 1.6;
   margin-top: 0.35rem;
 }
 .listing-date,
 .listing-reading-time {
-  color: #59636e;
+  color: var(--muted);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .listing-categories .listing-category {
-  background: #f3f5f7;
-  border: 1px solid #e6eaef;
-  color: #424a53;
+  background: var(--code-inline-bg);
+  border: 1px solid var(--border);
+  color: var(--ink-2);
   font-size: 0.75rem;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
@@ -187,14 +225,14 @@ table td {
   text-decoration: none;
 }
 .listing-categories .listing-category:hover {
-  background: #e9eef3;
-  color: #1f2328;
+  background: var(--chip-hover-bg);
+  color: var(--ink);
 }
 
 /* Hero intro on the home page */
 .home-hero {
   padding: 2.5rem 0 2rem;
-  border-bottom: 1px solid #e6eaef;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 1.5rem;
 }
 .home-hero h1 {
@@ -205,7 +243,7 @@ table td {
 }
 .home-hero p {
   font-size: 1.15rem;
-  color: #424a53;
+  color: var(--ink-2);
   line-height: 1.55;
   max-width: 38em;
   margin: 0;
@@ -213,11 +251,11 @@ table td {
 
 /* ---------- Footer ---------- */
 .page-footer {
-  border-top: 1px solid #e6eaef;
+  border-top: 1px solid var(--border);
   margin-top: 4rem;
   padding-top: 1.5rem;
   font-size: 0.875rem;
-  color: #59636e;
+  color: var(--muted);
 }
 
 /* ---------- TOC (sidebar) ---------- */
@@ -225,22 +263,22 @@ table td {
   font-size: 0.875rem;
 }
 #TOC a, .sidebar nav[role="doc-toc"] a {
-  color: #59636e;
+  color: var(--muted);
   border-left: 2px solid transparent;
   padding-left: 0.75rem;
   transition: color 0.15s, border-color 0.15s;
 }
-#TOC a:hover, .sidebar nav[role="doc-toc"] a:hover { color: #1f2328; }
+#TOC a:hover, .sidebar nav[role="doc-toc"] a:hover { color: var(--ink); }
 #TOC .active, .sidebar nav[role="doc-toc"] .active {
-  color: #0550ae;
-  border-left-color: #0550ae;
+  color: var(--accent);
+  border-left-color: var(--accent);
   font-weight: 500;
 }
 
 /* ---------- Selection ---------- */
 ::selection {
-  background: #ffe9a8;
-  color: #1f2328;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
 /* ---------- Responsive ---------- */
@@ -249,3 +287,159 @@ table td {
   .home-hero p { font-size: 1.05rem; }
   .quarto-title-block .title { font-size: 1.85rem; }
 }
+
+/* ---------- Interactive OJS widgets (H005 refusal-direction sim) ---------- */
+/* Observable Inputs + Plot, scoped so they read as figures, not raw form controls. */
+.cell .ojs-in-a-box-waiting-for-module { min-height: 0; }
+
+/* Control rows: tighter labels, sit them in a soft panel */
+.cell > form {
+  margin: 0.35rem 0;
+}
+.cell > form label {
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+
+/* The worked-examples table emitted by the toy demo */
+table.toy-examples {
+  font-size: 0.86rem;
+  width: 100%;
+  margin: 1rem 0 0.5rem;
+}
+table.toy-examples th {
+  border-bottom: 2px solid var(--ink);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+}
+table.toy-examples td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+table.toy-examples td code {
+  background: var(--code-inline-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.92em;
+}
+/* The graded model-response cell: readable prose, not code, with room to wrap. */
+table.toy-examples td.toy-completion {
+  color: var(--ink-2);
+  line-height: 1.45;
+  min-width: 16rem;
+}
+table.toy-examples td.toy-completion code {
+  font-size: 0.86em;
+}
+
+/* Plot figures: center, cap width so they sit in the reading column */
+.cell svg[class^="plot-"] {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Playground page + shared sim widget ---------- */
+.sim-scenarios {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem 1rem 1.25rem;
+  margin: 1.25rem 0 1.75rem;
+}
+.sim-scenarios-title {
+  font-weight: 650;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.sim-scenarios ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.sim-scenarios li {
+  margin: 0.35rem 0;
+  line-height: 1.55;
+}
+
+/* The mounted widget: controls in a soft panel, output below. */
+.sim-mount {
+  margin: 0.5rem 0 1rem;
+}
+.sim-widget-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding: 1rem 1.1rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+}
+.sim-widget-controls label {
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+.sim-widget-output .sim-widget-rate,
+.sim-widget-output .sim-widget-note {
+  line-height: 1.6;
+}
+.sim-widget-note {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+}
+.sim-readmore {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-weight: 500;
+}
+/* Simulation picker: wide enough not to clip the longest title. */
+.quarto-container form select,
+.cell form select {
+  min-width: 20rem;
+}
+
+/* Jump-to-simulation callout used inside posts. */
+.sim-jump {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+.sim-jump a { font-weight: 600; }
+
+/* ---------- Dark-mode toggle: sun / moon instead of Quarto's toggle-switch ----------
+   Quarto's default icon is a generic on/off switch (reads as decorative). We
+   override the .bi::before background-image with a moon (shown in light mode =
+   "switch to dark") and a sun (shown when .alternate = dark mode active =
+   "switch to light"). Inline data: SVGs, no extra requests. */
+.quarto-color-scheme-toggle .bi::before {
+  height: 1.15rem !important;
+  width: 1.15rem !important;
+  background-size: 1.15rem 1.15rem !important;
+  transition: opacity 0.15s ease;
+}
+/* Light mode active (no .alternate) -> show a MOON (click to go dark). */
+.quarto-color-scheme-toggle:not(.alternate) .bi::before,
+.quarto-color-scheme-toggle:not(.alternate).top-right .bi::before {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23414a53" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/><path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162z"/></svg>') !important;
+}
+/* Dark mode active (.alternate) -> show a SUN (click to go light). */
+.quarto-color-scheme-toggle.alternate .bi::before,
+.quarto-color-scheme-toggle.alternate.top-right .bi::before {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23e8b339" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>') !important;
+}
+.quarto-color-scheme-toggle:hover .bi::before { opacity: 0.65; }

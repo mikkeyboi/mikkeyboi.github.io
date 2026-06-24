@@ -1,0 +1,74 @@
+---
+title: ""
+pagetitle: "Interactive simulations — Michael Leung"
+description: "Live, in-browser simulations from the posts — steer a model's refusal direction and more."
+page-layout: full
+toc: false
+resources:
+  - widgets/refusal_widget.mjs
+  - widgets/refusal_sim.mjs
+  - widgets/registry.mjs
+---
+
+::: {.home-hero}
+# Playground
+Interactive versions of the ideas in the posts. Each one runs live in your browser, with a short description, a few scenarios to try, and a link to the full write-up. Pick a simulation to load it.
+:::
+
+```{ojs}
+//| echo: false
+registry = import(await FileAttachment("widgets/registry.mjs").url())
+```
+
+```{ojs}
+//| echo: false
+sims = registry.SIMULATIONS
+```
+
+```{ojs}
+//| echo: false
+viewof chosenId = Inputs.select(
+  new Map(sims.map(s => [s.title, s.id])),
+  { label: "Simulation", value: sims[0].id }
+)
+```
+
+```{ojs}
+//| echo: false
+chosen = sims.find(s => s.id === chosenId)
+```
+
+```{ojs}
+//| echo: false
+// What it is + what it does (and doesn't).
+md`### ${chosen.title}\n\n${chosen.blurb}\n\n${chosen.what}`
+```
+
+```{ojs}
+//| echo: false
+// Scenarios to try.
+html`<div class="sim-scenarios">
+  <div class="sim-scenarios-title">Try this</div>
+  <ol>${chosen.scenarios.map(s => html`<li><strong>${s.label}.</strong> ${s.do}</li>`)}</ol>
+</div>`
+```
+
+```{ojs}
+//| echo: false
+// Mount the chosen sim's widget. Expression cell (not a named assignment) so OJS
+// displays the DOM node exactly once; it re-runs when `chosen` changes (the
+// dropdown), re-mounting the selected simulation. A separate bare display cell
+// would re-inspect the adopted node and print "HTMLDivElement {}".
+{
+  const sel = chosen; // depend on the dropdown
+  const [simMod, widgetMod] = await Promise.all([sel.sim(), sel.widget()]);
+  const container = html`<div class="sim-mount"></div>`;
+  widgetMod.renderRefusalToy(container, { Inputs, Plot, html, sim: simMod });
+  return container;
+}
+```
+
+```{ojs}
+//| echo: false
+md`<p class="sim-readmore">Full write-up: <a href="${chosen.post}">${chosen.title} →</a></p>`
+```
