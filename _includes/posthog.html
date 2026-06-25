@@ -19,11 +19,15 @@
       // consent banner is needed. We lose cross-session identity (fine for a blog);
       // we keep geography, autocaptured clicks, scroll depth, and heatmaps.
       persistence: "memory",
-      // Be conservative about PII on a personal site.
+      // Session replay is ON, but because persistence is memory-only the session
+      // ID is not stored across page loads — so each pageview records as its own
+      // short replay rather than one stitched cross-page session. That's the
+      // deliberate trade for staying cookieless / banner-free.
       autocapture: true,
       capture_pageview: true,
       capture_pageleave: true,
-      disable_session_recording: true,
+      disable_session_recording: false,
+      // No PII on a public blog, so don't mask — replays stay legible.
       mask_all_text: false,
       mask_all_element_attributes: false
     });
