@@ -13,12 +13,13 @@ draft: false
 
 I trained a linear probe to read a composed sentiment concept off Gemma 3 1B, and
 by layer 7 it classified every held-out example correctly. Then I took that exact
-layer-7 direction, turned it into a steering vector, and injected it into the
-residual stream at a deep layer where steering on this concept actually works (layer
-16), at the same norm as the direction that steers cleanly there. It did essentially
-nothing. Per unit of injected norm it moved behaviour by -0.0001, sitting right on
-top of a random direction's effect, while the direction fit at the deep site itself
-moved behaviour by +0.053.
+layer-7 direction, turned it into a steering vector, and injected it at layer 16,
+the fixed deep site used for the matched-dose direction comparison. The earlier
+depth scan had placed the steering peak in this deep band, at layer 18 for seed 0
+and layer 16 for seed 1. At the fixed layer-16 site, the readable direction did
+essentially nothing. Per unit of injected norm it moved behaviour by -0.0001,
+sitting right on top of a random direction's effect, while the direction fit at
+layer 16 itself moved behaviour by +0.053.
 
 Same model, same concept, one direction I can read from and a different direction I
 can steer with. The two are nearly perpendicular: the cosine between the readable
@@ -63,26 +64,28 @@ interesting if it moved them more than an equal-sized random shove.
 
 The readable half is the familiar rise-then-plateau. At the embedding the probe is
 at 0.500, exactly chance, as the construction guarantees. Accuracy climbs through the
-early layers and hits a 1.000 ceiling by layer 7, where it stays. So the concept is
-linearly readable from layer 7 on.
+early layers and hits a 1.000 ceiling by layer 7, where it stays. The concept is
+therefore linearly readable from layer 7 on.
 
 The steerable half peaks much deeper. Scanning where an injected direction most
 specifically moves the behaviour (real effect over the matched random control), the
-clean site is around layer 18, far downstream of where reading saturates. That alone
-is the readable-vs-steerable split: the concept is readable at 7 but most steerable
-at 18.
+peak falls in the L16–L18 band across seeds, far downstream of where reading
+saturates. Seed 0 peaks at L18; seed 1 peaks at L16. That alone is the
+readable-vs-steerable split: the concept is readable at L7 but most steerable in a
+distinct deep band.
 
 But a fit-at-L, inject-at-L scan changes two things at once, the layer you inject at
 and the direction you inject, so it cannot tell you whether layer 7 is a bad *place*
 to push or whether the layer-7 *direction* is a bad lever. To separate them I hold
-the injection site fixed at the deep steerable layer and swap only the direction,
-each as a unit vector at matched dose: the direction fit at the readable onset, the
-direction fit at the site itself, and a random control. This is the number from the
-opening. At the fixed deep site (layer 16), the site's own direction steers at +0.053
-norm-efficiency and beats the random control; the readable-onset direction comes in
-at -0.0001, a non-lever that does not beat the control. Relative to the site's own
-direction the readable direction is 100% less efficient. The geometry is consistent
-with that deficit: the two directions are near-orthogonal (cosine about 0.15), so the
+the injection site fixed at layer 16, a pre-registered site inside that seed-stable
+deep band, and swap only the direction, each as a unit vector at matched dose: the
+direction fit at the readable onset, the direction fit at layer 16, and a random
+control. This is the number from the opening. At the fixed layer-16 site, its own
+direction steers at +0.053 norm-efficiency and beats the random control; the
+readable-onset direction comes in at -0.0001, a non-lever that does not beat the
+control. Its signed efficiency ratio is -0.001 relative to the layer-16 direction,
+effectively zero with a tiny wrong-sign estimate. The geometry is consistent with
+that deficit: the two directions are near-orthogonal (cosine about 0.15), so the
 readable direction has almost no component along the site's fitted axis. The fitted
 concept direction rotates as it moves up the stack, and reading catches it early, in a
 pose that is a poor lever at the deep site.
@@ -94,19 +97,20 @@ Gemma, an RMSNorm model, but 28 layers) and StableLM-2 1.6B (a LayerNorm model, 
 layers). Both reproduce the split, and both reproduce the direction-quality gap at a
 fixed deep site.
 
-| Model | Normalization | Readable onset | Steerable site | Read-vs-steer cosine | Readable direction vs the site's own |
+| Model | Normalization | Readable onset | Deep steering band/site | Read-vs-steer cosine | Readable/site norm-efficiency ratio |
 |---|---|---|---|---|---|
-| Gemma 3 1B | RMSNorm | L7 | L18 | 0.15 | -100% (inert) |
-| Qwen2.5-1.5B | RMSNorm | L10 | L24 | 0.15 | -129% (wrong sign) |
-| StableLM-2 1.6B | LayerNorm | L4 | L22 | 0.04 | -87% (weak, right sign) |
+| Gemma 3 1B | RMSNorm | L7 | L16–L18; fixed comparison at L16 | 0.15 | -0.001 (inert) |
+| Qwen2.5-1.5B | RMSNorm | L10 | L24 | 0.15 | -0.290 (wrong sign) |
+| StableLM-2 1.6B | LayerNorm | L4 | L22 | 0.04 | +0.132 (weak, right sign) |
 
 In fractional-depth terms the split is if anything sharper on the later two (readable
-at 17-50% of depth, steerable at 86-92%). The read-vs-steer directions are
+at 17–50% of depth, steerable at 86–92%). The read-vs-steer directions are
 near-orthogonal on all three, and on the two RMSNorm models the cosine (about 0.15)
 lands inside an independent cross-family band (0.12 to 0.20) that Galeone and
 colleagues report for detection-vs-control directions across four other models. The
 readable-onset direction is a materially worse lever than the site's own direction
-everywhere: 100%, 129%, and 87% less efficient. All three verdicts are seed-stable.
+everywhere. Its signed norm-efficiency is -0.001× the site direction on Gemma,
+-0.290× on Qwen, and +0.132× on StableLM. All three verdicts are seed-stable.
 
 There is one honest wrinkle in that last column, and I want to flag it rather than
 smooth it over. On the RMSNorm models the readable direction is inert on Gemma and
@@ -156,8 +160,8 @@ At the readable onset, on every model, the concept is not merely un-aligned to t
 output basis; it is *anti-aligned*. The logit-lens AUC sits below the 0.5 chance floor:
 0.388 on Gemma at layer 7, 0.344 on Qwen at layer 10, 0.416 on StableLM at layer 4.
 This is Billa's regime 2. At the deep steerable site the same lens is strongly aligned:
-AUC 1.000, 0.886, and 0.810 respectively, his regime 1. So the depth story is not just
-"the concept moves"; it is that at the readable layer the concept is present in a form
+AUC 1.000, 0.886, and 0.810 respectively, his regime 1. The depth story is not just
+"the concept moves"; at the readable layer the concept is present in a form
 the output machinery reads *backwards*, while the measured deep steering site is
 output-aligned. That also reframes the near-orthogonal read-vs-steer cosine from
 earlier: output alignment and steerability coincide at the measured deep site, while
@@ -192,8 +196,9 @@ layer." I have not earned the strong version, and the honest bound is specific.
   geodesic alternative is untested here. Three architectures is real evidence of
   generality, but it is not "transformers in general."
 
-None of this is unique to my setup, which is part of why I trust it. The readable-vs-
-controllable separation is being reported independently and in very different places:
+None of this is unique to my setup, which is part of why I trust it. The
+readable-vs-controllable separation is being reported independently and in very
+different places:
 Galeone and colleagues find detection and control directions near-orthogonal across
 four models; Vankadaru and colleagues, working on medical-hallucination probes at the
 neuron level rather than the direction level, title their 2026 paper "Readable but Not
@@ -206,9 +211,10 @@ sign rider, and the repeated logit-lens regime contrast that motivates a sharper
 
 1. **A direction you can read is not a direction you can push.** On three models the
    readable-onset direction is a materially worse steering lever than the direction fit
-   where steering works (100%, 129%, and 87% less efficient at matched dose). Their
-   near-orthogonality is consistent with that deficit, without by itself proving the
-   mechanism. Reading catches the concept early, in a pose that is a poor deep-site lever.
+   where steering works. Its signed norm-efficiency is -0.001×, -0.290×, and +0.132×
+   the corresponding deep-site direction. Their near-orthogonality is consistent with
+   that deficit, without by itself proving the mechanism. Reading catches the concept
+   early, in a pose that is a poor deep-site lever.
 2. **The repeated sitewise contrast is a clue, not yet a forecast.** Push the residual
    through the model's own unembedding and the readable onset is output-anti-aligned,
    while the measured deep steering site is output-aligned, on all three models. That
