@@ -1,0 +1,240 @@
+---
+title: "Readable shallow, steerable deep: the same split in three transformers"
+description: "A direction I can read a composed sentiment concept off of is nearly perpendicular to the direction that steers it, and it is a worse lever at matched dose. The same split holds on three transformers and two normalization families, and a logit-lens diagnostic offers a candidate account of why the useful site is deep."
+author: "Michael Min Wah Leung"
+date: "2026-07-11"
+date-modified: last-modified
+categories: [interpretability, steering, probing, transformers]
+image: images/readable_steerable_regime.png
+draft: false
+---
+
+## A direction you can read is not a direction you can push
+
+I trained a linear probe to read a composed sentiment concept off Gemma 3 1B, and
+by layer 7 it classified every held-out example correctly. Then I took that exact
+layer-7 direction, turned it into a steering vector, and injected it at layer 16,
+the fixed deep site used for the matched-dose direction comparison. The earlier
+depth scan had placed the steering peak in this deep band, at layer 18 for seed 0
+and layer 16 for seed 1. At the fixed layer-16 site, the readable direction did
+essentially nothing. Per unit of injected norm it moved behaviour by -0.0001,
+sitting right on top of a random direction's effect, while the direction fit at
+layer 16 itself moved behaviour by +0.053.
+
+Same model, same concept, one direction I can read from and a different direction I
+can steer with. The two are nearly perpendicular: the cosine between the readable
+direction and the steerable one is about 0.15, roughly eighty degrees apart.
+
+This post is about that gap, and about the fact that it is not a quirk of one model.
+I found the same split in three transformers spanning two different normalization
+schemes, and a training-free logit-lens diagnostic tells a consistent story about
+what differs between the shallow readable onset and selected deep steering site. It is
+a sequel to an earlier post here
+([a probe at layer 0 is a lie detector for your
+experiment](../04-h001-depth-profile/)), which made a narrower point: where a
+concept is linearly *readable* is a claim about a readout, not about where the model
+*computes* or *uses* it. This post earns the next claim. Readable is not usable, the
+same divergence recurs across models, and the logit lens offers a candidate clue about
+where to look for a useful steering site.
+
+## The setup, in one paragraph
+
+The concept is concessive net sentiment. In a sentence like "Despite being
+tedious, it was gorgeous," the net sentiment is the polarity of the asserted main
+clause ("gorgeous," positive), and the conceded clause ("tedious") is
+discourse-backgrounded. I build every adjective pair in both orderings with opposite
+labels, so the two orderings share an identical multiset of tokens. That makes the
+non-lexical floor provable rather than hopeful: mean pooling is permutation
+invariant, so at the input embedding the two opposite-label sentences pool to the
+same vector, and any probe there is at chance. A bag-of-tokens model sees identical
+counts and is also pinned at chance. The label lives in word order, which the model
+has to actually process. I read the residual stream with a mean-pooled logistic
+probe per layer, and I steer by adding a difference-of-means direction (the standard
+CAA construction) into the residual stream through a forward hook.
+
+Two controls do most of the work throughout. For reading, a shuffled-label probe of
+the same capacity (selectivity is real accuracy minus that control). For steering, a
+random direction injected at the *same norm* as the real one, and I measure
+norm-efficiency, the behavioural shift per unit of injected residual-stream norm, in
+the low-dose window before saturation. Norm-efficiency matters because even a random
+equal-norm vector perturbs behaviour; "the real direction moved things" is only
+interesting if it moved them more than an equal-sized random shove.
+
+## The split on Gemma, cleanly separated
+
+The readable half is the familiar rise-then-plateau. At the embedding the probe is
+at 0.500, exactly chance, as the construction guarantees. Accuracy climbs through the
+early layers and hits a 1.000 ceiling by layer 7, where it stays. The concept is
+therefore linearly readable from layer 7 on.
+
+The steerable half peaks much deeper. Scanning where an injected direction most
+specifically moves the behaviour (real effect over the matched random control), the
+peak falls in the L16–L18 band across seeds, far downstream of where reading
+saturates. Seed 0 peaks at L18; seed 1 peaks at L16. That alone is the
+readable-vs-steerable split: the concept is readable at L7 but most steerable in a
+distinct deep band.
+
+But a fit-at-L, inject-at-L scan changes two things at once, the layer you inject at
+and the direction you inject, so it cannot tell you whether layer 7 is a bad *place*
+to push or whether the layer-7 *direction* is a bad lever. To separate them I hold
+the injection site fixed at layer 16, a pre-registered site inside that seed-stable
+deep band, and swap only the direction, each as a unit vector at matched dose: the
+direction fit at the readable onset, the direction fit at layer 16, and a random
+control. This is the number from the opening. At the fixed layer-16 site, its own
+direction steers at +0.053 norm-efficiency and beats the random control; the
+readable-onset direction comes in at -0.0001, a non-lever that does not beat the
+control. Its signed efficiency ratio is -0.001 relative to the layer-16 direction,
+effectively zero with a tiny wrong-sign estimate. The geometry is consistent with
+that deficit: the two directions are near-orthogonal (cosine about 0.15), so the
+readable direction has almost no component along the site's fitted axis. The fitted
+concept direction rotates as it moves up the stack, and reading catches it early, in a
+pose that is a poor lever at the deep site.
+
+## It is not a Gemma artifact
+
+One model is an anecdote. I ran the same design on two more: Qwen2.5-1.5B (like
+Gemma, an RMSNorm model, but 28 layers) and StableLM-2 1.6B (a LayerNorm model, 24
+layers). Both reproduce the split, and both reproduce the direction-quality gap at a
+fixed deep site.
+
+| Model | Normalization | Readable onset | Deep steering band/site | Read-vs-steer cosine | Readable/site norm-efficiency ratio |
+|---|---|---|---|---|---|
+| Gemma 3 1B | RMSNorm | L7 | L16–L18; fixed comparison at L16 | 0.15 | -0.001 (inert) |
+| Qwen2.5-1.5B | RMSNorm | L10 | L24 | 0.15 | -0.290 (wrong sign) |
+| StableLM-2 1.6B | LayerNorm | L4 | L22 | 0.04 | +0.132 (weak, right sign) |
+
+In fractional-depth terms the split is if anything sharper on the later two (readable
+at 17–50% of depth, steerable at 86–92%). The read-vs-steer directions are
+near-orthogonal on all three, and on the two RMSNorm models the cosine (about 0.15)
+lands inside an independent cross-family band (0.12 to 0.20) that Galeone and
+colleagues report for detection-vs-control directions across four other models. The
+readable-onset direction is a materially worse lever than the site's own direction
+everywhere. Its signed norm-efficiency is -0.001× the site direction on Gemma,
+-0.290× on Qwen, and +0.132× on StableLM. All three verdicts are seed-stable.
+
+There is one honest wrinkle in that last column, and I want to flag it rather than
+smooth it over. On the RMSNorm models the readable direction is inert on Gemma and
+actively wrong-sign on Qwen at -0.066. Gemma is close enough to zero that the
+control-beat flag is seed-sensitive, because one seed's random control is slightly
+more negative; Qwen fails the control cleanly. On the LayerNorm model it stays weakly
+on the right side and marginally beats the control (+0.023 against +0.018). The best
+current account of that difference is
+that an RMSNorm residual space carries a per-coordinate sign ambiguity that a
+diff-of-means axis fit at one layer and used at another need not respect, whereas
+LayerNorm carries only a single global sign (Sweeney, 2026). A companion measurement
+agrees: the per-layer steering sign is consistent across the stack on StableLM but
+inverts mid-stack on Qwen. I treat the sign behaviour as a rider on the main result,
+not a law. It is two normalization families with one model each beyond Gemma, so the
+claim I will stand behind is the split and the efficiency deficit; the sign is a
+suggestive normalization-linked detail.
+
+## Why deep? A candidate account from the model's own output
+
+The split says reading and steering diverge. It does not say why the deep site is the
+steerable one. For that I borrow a training-free diagnostic from Billa (2026): the
+logit lens. Instead of asking "can a fresh probe separate the classes at layer L,"
+ask "if I take the layer-L residual and push it straight through the model's own
+unembedding matrix, how well is the concept already aligned with the output tokens it
+would produce." Billa calls the profile of this quantity across layers the Linear
+Accessibility Profile, and reports that its peak predicts where steering works across
+five models. Crucially, he partitions layers into three regimes: a concept can be (1)
+present and output-aligned, where difference-of-means steering works; (2) present but
+not output-aligned, where it fails; or (3) not linearly present at all.
+
+I computed this on the same held-out sentences and the same positive/negative answer
+tokens the steering runs use, so "aligned to the output" means aligned to the readout
+I actually steer. One plumbing detail mattered enough to verify on the real models
+rather than assume: in this library version the final hidden state is already
+post-final-norm (pushing it through the unembedding reconstructs the model's logits to
+a Pearson correlation of essentially 1.0 on all three models), while the intermediate
+readout layers are raw residual with much larger norm. So the correct lens applies the
+final norm exactly once at each readout layer; a startup check fails closed if that
+invariant ever breaks.
+
+The same sitewise pattern appears on all three architectures, and it gives a candidate
+account of the depth split.
+
+![Readable shallow, output-aligned deep, on three architectures. Each panel overlays two curves against residual-stream layer for one model: linear-probe accuracy (blue, "is the concept readable here?") and the logit-lens accessibility as a rank AUC over the answer-token basis (orange, "is the concept aligned to the output here?", 0.5 is chance). The dotted lines mark the readable onset (where the probe hits its ceiling) and the measured most-steerable site. At the readable onset the concept is readable but the logit lens is below chance (Billa regime 2, output-anti-aligned); at the steerable site the lens is high (regime 1, output-aligned). Gemma 3 1B and Qwen2.5-1.5B are RMSNorm; StableLM-2 1.6B is LayerNorm. Generated from the committed increment-8 metrics; every number is in the post's evidence ledger.](images/readable_steerable_regime.png)
+
+At the readable onset, on every model, the concept is not merely un-aligned to the
+output basis; it is *anti-aligned*. The logit-lens AUC sits below the 0.5 chance floor:
+0.388 on Gemma at layer 7, 0.344 on Qwen at layer 10, 0.416 on StableLM at layer 4.
+This is Billa's regime 2. At the deep steerable site the same lens is strongly aligned:
+AUC 1.000, 0.886, and 0.810 respectively, his regime 1. The depth story is not just
+"the concept moves"; at the readable layer the concept is present in a form
+the output machinery reads *backwards*, while the measured deep steering site is
+output-aligned. That also reframes the near-orthogonal read-vs-steer cosine from
+earlier: output alignment and steerability coincide at the measured deep site, while
+the shallow readable pose is close to orthogonal to the site's fitted direction.
+
+## What this does not show
+
+The temptation is to promote this to "the logit lens predicts steerability layer by
+layer." I have not earned the strong version, and the honest bound is specific.
+
+- **The sitewise regime contrast repeats; the fine-grained prediction is not established
+  on two of three models.** Billa's headline is a per-layer rank correlation between
+  accessibility and steering effectiveness. I get a positive point estimate on all
+  three models (+0.68, +0.64, +0.65). But a naive layer-resampling interval excludes
+  zero only on Gemma's finer 17-layer scan; on the coarser 10-to-11-layer Qwen and
+  StableLM scans it includes zero. That interval is a sensitivity check, not a full
+  uncertainty model, because adjacent transformer layers are ordered and dependent.
+  The onset-is-regime-2/site-is-regime-1 contrast also uses sites already selected by
+  the measured steering sweep. It is a descriptive cross-model replication, not an
+  out-of-sample forecast. I therefore do not claim Billa's correlation strength or a
+  validated layer selector on our composed concept. A denser steering grid on the later
+  two models is the obvious next measurement, followed by validation on a held-out
+  concept or model.
+- **Output alignment as the cause is Billa's mechanism applied to my concept, not a
+  causal proof I ran.** The regime-2 onset, regime-1 site, and positive correlation
+  are all consistent with it, and it is a plausible account on the table, but I have
+  not done the intervention that would make it causal (for instance, rotating a readable
+  direction into the output-aligned pose and showing it becomes a lever).
+- **One concept family, three small instruct models, additive steering only.** The
+  concept is a single positional-role composition; the models are all in the 1-2B
+  range; and I add directions rather than rotating them, so the norm-preserving
+  geodesic alternative is untested here. Three architectures is real evidence of
+  generality, but it is not "transformers in general."
+
+None of this is unique to my setup, which is part of why I trust it. The
+readable-vs-controllable separation is being reported independently and in very
+different places:
+Galeone and colleagues find detection and control directions near-orthogonal across
+four models; Vankadaru and colleagues, working on medical-hallucination probes at the
+neuron level rather than the direction level, title their 2026 paper "Readable but Not
+Controllable" and find a sharp decodability-vs-controllability gap across sixteen
+model-dataset pairs. My contribution is not the phenomenon's existence. It is the
+matched-dose efficiency numbers that isolate direction from site, the normalization
+sign rider, and the repeated logit-lens regime contrast that motivates a sharper test.
+
+## What this taught me
+
+1. **A direction you can read is not a direction you can push.** On three models the
+   readable-onset direction is a materially worse steering lever than the direction fit
+   where steering works. Its signed norm-efficiency is -0.001×, -0.290×, and +0.132×
+   the corresponding deep-site direction. Their near-orthogonality is consistent with
+   that deficit, without by itself proving the mechanism. Reading catches the concept
+   early, in a pose that is a poor deep-site lever.
+2. **The repeated sitewise contrast is a clue, not yet a forecast.** Push the residual
+   through the model's own unembedding and the readable onset is output-anti-aligned,
+   while the measured deep steering site is output-aligned, on all three models. That
+   motivates a cheaper layer-selection signal, but validating it requires denser steering
+   measurements and a held-out concept or model.
+3. **Separate a selected-site contrast from a predictive test.** The onset/site regime
+   contrast repeats on all three models, but those sites came from the steering sweeps.
+   The finer layer-by-layer correlation is positive yet only clears a naive resampling
+   interval on the densest scan. Keeping those two claims apart is most of the honesty
+   here.
+4. **Report the rider without inflating it.** The readable direction's sign tracked the
+   normalization family, wrong-sign under RMSNorm, weakly right-sign under LayerNorm, on
+   two families with one model each beyond the first. That is a genuine and interesting
+   detail, and it is not yet a law. Both things are true at once.
+
+---
+
+*Companion code (a runnable reproduction of the logit-lens regime read on the three
+models, synthetic by default) lives in the
+[mechinterp-samples](https://github.com/mikkeyboi/mechinterp-samples) repository under
+`samples/h004_readable_vs_steerable/`. If you work on steering, probing, or
+representation geometry, I would like to compare notes on where reading and control
+come apart.*
