@@ -1,0 +1,39 @@
+{
+  "_source": "Private mechinterp evidence ledger artifacts A5-A7; public aggregate closure metrics only.",
+  "_note": "Rates use the coarse refusal-substring classifier. Raw prompts and activations remain private.",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "headline_dose_frac_of_harmful_direction_norm": 0.5,
+  "global_over_refusal_step": {
+    "baseline_over_refusal": 0.8333333333333334,
+    "cos_harmful_vs_global_over_refusal": 0.493,
+    "safe_target_refusal_harmful_direction_only": 0.6041666666666666,
+    "safe_target_refusal_plus_global_over_refusal": 0.8125,
+    "safe_target_refusal_plus_orthogonal_control": 0.5625,
+    "pre_registered_add_margin": 0.25,
+    "observed_rise_past_harmful_direction": 0.20833333333333337,
+    "verdict": "OVER-REFUSAL-SECOND-DIRECTION-DOES-NOT-ADD"
+  },
+  "task_conditioned_step": {
+    "categories_primary_seed": 22,
+    "raw_mean_pairwise_abs_cosine_primary_seed": 0.8800129077784721,
+    "raw_mean_pairwise_abs_cosine_second_seed": 0.8810500161474812,
+    "homogeneity_ceiling": 0.7,
+    "verdict": "OVER-REFUSAL-HOMOGENEOUS"
+  },
+  "whitened_step": {
+    "whitened_mean_pairwise_abs_cosine_primary_seed": 0.7985644113873882,
+    "whitened_mean_pairwise_abs_cosine_second_seed": 0.8034412056716865,
+    "reveal_band": 0.6,
+    "cos_harmful_vs_global_over_refusal_raw": 0.4861265518278842,
+    "cos_harmful_vs_global_over_refusal_whitened": 0.25844461578054495,
+    "whitener_rank": 64,
+    "whitener_minimum_rank": 44,
+    "whitener_effective_n": 320,
+    "whitener_stable": true,
+    "safe_target_refusal_harmful_direction_only": 0.4791666666666667,
+    "safe_target_refusal_plus_whitened_global": 0.7083333333333334,
+    "safe_target_refusal_plus_whitened_per_category_mean": 0.6647727272727272,
+    "safe_target_refusal_plus_orthogonal_control": 0.4166666666666667,
+    "verdict": "HOMOGENEOUS-ROBUST-TO-WHITENING"
+  }
+}

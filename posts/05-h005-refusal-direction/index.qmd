@@ -151,14 +151,54 @@ respects.
   resemble harmful ones. That is a different arm from the suppression test above.
 
   I have since run that over-refusal addition arm too, using benign-but-scary
-  FalseReject prompts. The global over-refusal direction was distinct from d1 and beat
-  the random orthogonal control, but it missed the pre-set add-margin past d1 alone:
-  on the primary seed at the headline dose, +d1 raised safe-target refusal to 0.60,
-  +{d1,d_over} to 0.81, and +{d1,control} to 0.56. A second seed gave the same verdict.
-  I read that as
-  another bounded negative, this time for a global single-layer d_over, not as closure.
-  The next useful probe is more specific: fit the over-refusal direction by task
-  category rather than averaging all scary-looking prompts together.
+  FalseReject prompts, and then chased it to a clean close. There were three steps.
+
+  First, a *global* over-refusal direction (one axis fit by averaging all
+  scary-looking prompts together). It was distinct from d1 and beat the random
+  orthogonal control, but it missed the pre-set add-margin past d1 alone: on the
+  primary seed at the headline dose, +d1 raised safe-target refusal to 0.60,
+  +{d1,d_over} to 0.81, and +{d1,control} to 0.56. A second seed agreed. A bounded
+  negative, but a near-miss, and the obvious next question was whether averaging
+  across categories had washed out real per-category structure.
+
+  Second, I fit the over-refusal direction *per task category* (the 20-plus
+  FalseReject categories: malware, libel, self-harm, and so on), to see if
+  category-specific axes would add what the global one could not. They did not: the
+  per-category axes turned out highly parallel to each other (mean pairwise absolute
+  cosine 0.88, well above my 0.7 homogeneity ceiling), so a per-category fit cannot beat the
+  global axis, because there is essentially one axis. That could have been an artifact
+  of the cheap estimator, though. A raw difference of means in a model's native
+  activation space is dominated by whatever high-variance "scary surface" all these
+  prompts share (weapons, chemistry, hacking vocabulary), which can make genuinely
+  different category axes *look* parallel.
+
+  Third, I re-fit the same per-category axes with a covariance-aware (whitened)
+  estimator, the standard correction for that anisotropy, changing *only* the
+  estimator and nothing else in the pipeline. Whitening was not inert: it pulled the
+  per-category axes apart somewhat (mean pairwise absolute cosine 0.88 to 0.80) and
+  pulled the global over-refusal axis much further off d1 (cosine 0.49 to 0.26), exactly
+  the nuisance-removing job it is meant to do. But the observed whitened mean pairwise
+  absolute cosine was still 0.80 on the primary seed (0.803 on the second seed),
+  above the 0.60 reveal band on both. The whitened axes separated from the harmful
+  direction, but not from each other.
+
+  ![H005 over-refusal closure on Qwen2.5-1.5B-Instruct (whitened estimator, headline dose 0.5x the harmful-direction norm). Left: mean pairwise absolute cosine between the per-category over-refusal axes, raw difference-of-means (0.88) versus the whitened covariance-aware re-fit (0.80); the dashed line is the 0.70 homogeneity ceiling and the dotted line the 0.60 reveal band. Whitening moved the axes the right way but not below the band, so the per-category axes remain mutually near-parallel. Right: the whitened addition arm, held-out safe-target refusal after adding the harmful direction d1 alone, then d1 plus the whitened global over-refusal axis, then d1 plus the whitened per-category mean, then d1 plus a norm-matched orthogonal control. The per-category fit does not add refusal-induction power past the global axis. Values trace to `h005_over_refusal_closure_metrics.json` in this post directory.](images/h005_whitened_over_refusal_real_qwen2.5-1.5b.png){fig-alt="Two-panel comparison of raw and whitened over-refusal direction geometry and refusal rates."}
+
+  Putting the three together, I am comfortable closing this arm as a bounded result.
+  On this model, over-refusal is genuine (the model wrongly refuses about five in six,
+  0.83, of these benign-but-scary prompts) and it is *distinct* from the harmful-refusal
+  direction, but it rides a single shared boundary axis, not a family of
+  task-conditioned directions. A per-category fit, raw or whitened, does not buy
+  anything the one global axis does not already have. I want to be careful about what
+  that is not: it is not a claim that over-refusal is globally one-dimensional, and a
+  larger model, a model trained with explicit per-category refusal tokens, or a
+  different category scheme could still show richer structure. But on
+  Qwen2.5-1.5B-Instruct the cheap and the careful estimators agree, so I do not think
+  re-litigating per-category structure here is the productive move. It is a small piece
+  of convergent evidence that a recent study of refusal geometry under adversarial
+  fine-tuning reports too: the causal refusal-control carrier they track stays
+  low-dimensional (effective rank near 1.24) and coupled to benign utility rather than
+  expanding into a high-dimensional, task-shaped object.
 - **The readout is coarse.** A substring classifier only sees whether a completion
   opens with a refusal phrase. I trust the direction of a large, control-beating shift;
   I would not read anything into a small one, and a more careful refusal judgement
