@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 // so pages/writing.astro would become /writing.html and posts/<slug>/index.astro /posts/<slug>/.
 // SITE_BASE serves the build from a subfolder, such as the private preview under /static/cv/.
 export default defineConfig({
-  site: 'https://mikkeyboi.github.io',
+  site: 'https://minwahleung.ca',
   base: process.env.SITE_BASE ?? '/',
   output: 'static',
   outDir: 'dist',

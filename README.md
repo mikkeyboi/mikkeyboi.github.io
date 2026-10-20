@@ -37,7 +37,7 @@ quarto preview              # live-reload at http://localhost:4444 (posts, playg
 
 ## Publishing
 
-When this folder is pushed to `mikkeyboi/mikkeyboi.github.io` (the `main` branch), the Actions workflow builds the Astro site, renders Quarto, and publishes to GitHub Pages automatically. Site URL: <https://mikkeyboi.github.io>.
+When this folder is pushed to `mikkeyboi/mikkeyboi.github.io` (the `main` branch), the Actions workflow builds the Astro site, renders Quarto, and publishes to GitHub Pages automatically. Site URL: <https://minwahleung.ca> (also served at <https://mikkeyboi.github.io>, which redirects).
 
 **One-time setup on the GitHub repo:**
 
