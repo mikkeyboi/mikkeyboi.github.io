@@ -23,11 +23,15 @@ h1, h2, h3 { font-weight: 500; letter-spacing: -0.02em; margin: 0; }
   background: linear-gradient(var(--ink) 10%, transparent);
   font-size: 14px;
 }
-.bar-name { color: var(--text); font-weight: 500; letter-spacing: 0.02em; }
+.bar-name { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-weight: 500; letter-spacing: 0.02em; }
+.bar-name:hover { text-decoration: none; }
+.bar-mark { width: 7px; height: 7px; border-radius: 50%; background: var(--copper); box-shadow: 0 0 10px var(--copper); animation: bar-pulse 3.2s ease-in-out infinite; }
+@keyframes bar-pulse { 50% { opacity: .35; box-shadow: none; } }
 .bar-links { display: flex; gap: 22px; }
-.bar-links a { color: var(--muted); }
+.bar-links a { color: var(--muted); position: relative; }
 .bar-links a:hover { color: var(--text); text-decoration: none; }
-.bar-links .bar-cv { color: var(--copper); }
+.bar-links a[aria-current] { color: var(--text); }
+.bar-links a[aria-current]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: var(--copper); }
 
 .rail {
   position: fixed; left: calc(var(--gutter) - 6px); top: 50%; z-index: 15;
@@ -55,4 +59,5 @@ h1, h2, h3 { font-weight: 500; letter-spacing: -0.02em; margin: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .bar-mark { animation: none; }
 }

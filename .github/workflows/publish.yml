@@ -1,6 +1,6 @@
 name: Build and publish site
 
-# Rust kernels -> Astro site (living CV) -> Quarto posts -> one site. Pull requests run every check and build
+# Rust kernels -> Astro site (living CV, writing, playground). Pull requests run every check and build
 # the whole site without deploying; pushes to main also deploy to GitHub Pages.
 on:
   push:
@@ -63,41 +63,14 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: site-dist
-          path: site/dist
-
-  site:
-    name: Site (Quarto render, assemble)
-    needs: web
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: quarto-dev/quarto-actions/setup@v2
-        with:
-          version: "1.6.42"
-      - run: quarto render
-      - uses: actions/download-artifact@v4
-        with:
-          name: site-dist
-          path: site-dist
-      - name: Assemble
-        run: |
-          cp -R site-dist/. _site/
-          test -f _site/index.html
-          test -f _site/writing.html
-          # Every post keeps its /posts/NN-slug/ URL.
-          for d in posts/*/; do test -f "_site/${d}index.html"; done
-          test -f _site/playground/index.html
-          test -f _site/playground/widgets/refusal_sim.mjs
+      - run: npm run verify
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./_site
+          path: site/dist
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: site
+    needs: web
     runs-on: ubuntu-latest
     permissions:
       pages: write

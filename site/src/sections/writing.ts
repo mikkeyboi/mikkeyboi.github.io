@@ -1,40 +1,10 @@
 import { el } from '../core/dom';
-import { css, type Hue } from '../core/color';
-import { hash, vnoise } from '../core/math';
-import { POSTS } from '../content/posts';
+import { css } from '../core/color';
+import { coverSeed, coverSvg } from '../core/cover';
+import { readPosts } from '../content/posts';
 import { PROFILE } from '../content/profile';
 import { siteUrl } from '../core/site';
 import { track } from '../core/analytics';
-
-const NS = 'http://www.w3.org/2000/svg';
-
-/** A generative cover: quiet traces with one coloured signal, unique per post. */
-function cover(seed: number, hue: Hue): SVGSVGElement {
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 300 150');
-  svg.setAttribute('preserveAspectRatio', 'none');
-  svg.setAttribute('aria-hidden', 'true');
-  for (let l = 0; l < 7; l++) {
-    let d = '';
-    for (let x = 0; x <= 300; x += 4) {
-      const y = 22 + l * 18 + Math.sin(x * (0.02 + hash(seed + l) * 0.03) + l) * 6 * hash(seed * 3 + l) + vnoise(x * 0.06 + seed * 10 + l * 7) * 5;
-      d += `${x ? 'L' : 'M'}${x},${y.toFixed(1)}`;
-    }
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', css(l === 3 ? hue : 'grey', l === 3 ? 0.95 : 0.25));
-    path.setAttribute('stroke-width', l === 3 ? '1.8' : '1');
-    svg.append(path);
-  }
-  const c = document.createElementNS(NS, 'circle');
-  c.setAttribute('cx', String(60 + hash(seed * 7) * 180));
-  c.setAttribute('cy', '76');
-  c.setAttribute('r', '4');
-  c.setAttribute('fill', css(hue));
-  svg.append(c);
-  return svg;
-}
 
 export function writingSection(): HTMLElement {
   const section = el('section', 'writing');
@@ -43,20 +13,22 @@ export function writingSection(): HTMLElement {
   head.append(
     el('p', 'kicker', 'Writing'),
     el('h2', '', 'The long version.'),
-    el('p', '', 'Every chapter here has a slower, deeper read, in a conventional reading view.'),
+    el('p', '', 'Every chapter here has a slower, deeper read. Open one for a quick read and come straight back, or carry on into the full post.'),
   );
   const all = el('a', 'all-writing', 'All writing →');
   all.href = siteUrl('/writing.html');
   head.append(all);
   const cards = el('div', 'cards');
-  POSTS.forEach((post, i) => {
+  readPosts().forEach((post, i) => {
     const a = el('a', 'card');
     a.href = siteUrl(`/posts/${post.slug}/`);
     a.addEventListener('click', () => track('post_card_click', { slug: post.slug }));
     const body = el('div', 'card-body');
-    body.append(el('span', 'card-tag', post.tag), el('h3', '', post.title), el('p', '', post.blurb), el('span', 'card-go', 'Read →'));
-    a.append(cover(i + 1.37, post.hue), body);
+    body.append(el('span', 'card-tag', post.tag), el('h3', '', post.title), el('p', '', post.blurb), el('span', 'card-go', 'Quick read →'));
+    a.insertAdjacentHTML('afterbegin', coverSvg(coverSeed(post.slug), post.hue));
+    a.append(body);
     a.style.transitionDelay = `${(i % 3) * 90}ms`;
+    a.style.setProperty('--accent', css(post.hue));
     cards.append(a);
   });
   section.append(head, cards);

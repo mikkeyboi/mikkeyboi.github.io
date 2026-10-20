@@ -1,0 +1,74 @@
+---
+import { render } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Base from '../../../layouts/Base.astro';
+import Cover from '../../../components/Cover.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { PALETTE } from '../../../core/color';
+import { formatDate, getPosts, readingMinutes, type PostEntry } from '../../../lib/posts';
+import '../../../styles/writing.css';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({ params: { slug: post.id }, props: { post, newer: posts[i - 1], older: posts[i + 1] } }));
+}
+
+interface Props { post: PostEntry; newer?: PostEntry; older?: PostEntry }
+const { post, newer, older } = Astro.props;
+const { data } = post;
+const { Content, headings } = await render(post);
+const toc = headings.filter((h) => h.depth === 2);
+const card = await getImage({ src: data.image, width: 1200, format: 'png' });
+const accent = PALETTE[data.hue].join(' ');
+---
+
+<Base title={`${data.title} · Michael Leung`} description={data.description} surface="post" current="writing" image={card.src} type="article">
+  <meta slot="head" property="article:published_time" content={data.date.toISOString()} />
+  <div class="read-progress" aria-hidden="true"><i></i></div>
+  <article class="post" style={`--accent: rgb(${accent}); --accent-rgb: ${accent}`} data-slug={post.id}>
+    <header class="post-hero">
+      <div class="post-hero-inner">
+        <p class="post-crumb"><a href="/writing.html">Writing</a><span aria-hidden="true">/</span><span class="kicker">{data.tag}</span></p>
+        <h1>{data.title}</h1>
+        <p class="post-dek">{data.description}</p>
+        <p class="post-meta">
+          <time datetime={data.date.toISOString().slice(0, 10)}>{formatDate(data.date)}</time>
+          <span>{readingMinutes(post)} min read</span>
+          {data.tags.map((t) => <span class="post-tag">{t}</span>)}
+        </p>
+      </div>
+      <Cover slug={post.id} hue={data.hue} class="post-hero-cover" />
+    </header>
+
+    <div class="post-body">
+      {toc.length > 2 && (
+        <nav class="toc" aria-label="On this page">
+          <p class="toc-title">On this page</p>
+          <ol>{toc.map((h) => <li><a href={`#${h.slug}`} data-toc={h.slug}><i aria-hidden="true"></i><span>{h.text}</span></a></li>)}</ol>
+        </nav>
+      )}
+      <div class="prose" data-prose>
+        <Content />
+      </div>
+    </div>
+
+    <footer class="post-end">
+      <a class="post-home" href="/" data-path="/">
+        <span class="kicker">Back to the living CV</span>
+        <span>See where this work sits in the larger story →</span>
+      </a>
+      {(newer || older) && (
+        <div class="post-next">
+          {older && <div><p class="kicker">Previous</p><PostCard post={older} /></div>}
+          {newer && <div><p class="kicker">Next</p><PostCard post={newer} /></div>}
+        </div>
+      )}
+    </footer>
+  </article>
+</Base>
+
+<script>
+  import { PostReader } from '../../../components/post/reader';
+
+  PostReader.attach(document);
+</script>

@@ -8,7 +8,7 @@ import { SCENES } from './scenes';
 import { HeroChapter } from './sections/hero';
 import { footer, writingSection } from './sections/writing';
 import { loadKernels } from './kernel';
-import { initAnalytics, track } from './core/analytics';
+import { track } from './core/analytics';
 import { siteUrl } from './core/site';
 
 function boot(): void {
@@ -30,7 +30,6 @@ function boot(): void {
   engine.start();
 }
 
-initAnalytics();
 document.querySelectorAll<HTMLAnchorElement>('a[data-path]').forEach((a) => { a.href = siteUrl(a.dataset.path!); });
 // Kernels first: scenes take their compute backend when constructed.
 loadKernels()

@@ -1,0 +1,9 @@
+---
+import type { ToyDefaults } from './toy';
+import SimFrame from '../SimFrame.astro';
+
+interface Props { defaults?: ToyDefaults }
+const { defaults = {} } = Astro.props;
+---
+
+<SimFrame sim="refusal-toy" props={defaults} label="Interactive · synthetic model, computed live" />

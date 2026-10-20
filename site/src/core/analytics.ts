@@ -15,8 +15,8 @@ declare global { interface Window { posthog?: PostHog & { _q?: unknown[] } } }
 const once = new Set<string>();
 let enabled = false;
 
-/** Load PostHog's loader with a queueing stub, mirroring their official snippet. */
-export function initAnalytics(): void {
+/** Load PostHog's loader with a queueing stub, mirroring their official snippet. `surface` tags the page kind. */
+export function initAnalytics(surface: string): void {
   if (!HOSTS.includes(location.hostname) || window.posthog) return;
   const queue: unknown[] = [];
   const stub = { _q: queue } as unknown as PostHog & { _q: unknown[] };
@@ -44,7 +44,7 @@ export function initAnalytics(): void {
     mask_all_text: false,
     mask_all_element_attributes: false,
   });
-  window.posthog.register({ surface: 'living-cv' });
+  window.posthog.register({ surface });
   enabled = true;
 }
 

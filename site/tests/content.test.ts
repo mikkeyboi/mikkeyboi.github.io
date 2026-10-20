@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CHAPTERS } from '../src/content/chapters';
 import { REFS } from '../src/content/refs';
-import { POSTS } from '../src/content/posts';
+import { readdirSync, readFileSync } from 'node:fs';
+import { PALETTE } from '../src/core/color';
 import { PROFILE } from '../src/content/profile';
 
 describe('chapter content', () => {
@@ -35,8 +36,16 @@ describe('references and links', () => {
     for (const u of urls) expect(u).toMatch(/^(https:\/\/|\/)/);
   });
 
-  it('every post has a slug that looks like a post folder', () => {
-    for (const p of POSTS) expect(p.slug).toMatch(/^\d{2}-[a-z0-9-]+$/);
+  it('every post folder keeps the NN-slug URL shape and a known card hue', () => {
+    const dir = new URL('../src/content/posts/', import.meta.url);
+    const slugs = readdirSync(dir);
+    expect(slugs.length).toBeGreaterThan(0);
+    for (const slug of slugs) {
+      expect(slug).toMatch(/^\d{2}-[a-z0-9-]+$/);
+      const file = readdirSync(new URL(`${slug}/`, dir)).find((f) => /^index\.mdx?$/.test(f));
+      const hue = readFileSync(new URL(`${slug}/${file}`, dir), 'utf8').match(/^hue: (\w+)$/m)?.[1];
+      expect(Object.keys(PALETTE)).toContain(hue);
+    }
   });
 
   it('yearly citations never exceed the total, which can include years not charted', () => {

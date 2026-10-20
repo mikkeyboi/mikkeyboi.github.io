@@ -1,0 +1,14 @@
+---
+/** A margin note inside a post: a jump link, or a collapsible note with a title. */
+interface Props { kind: 'jump' | 'note'; title?: string; collapsed?: boolean }
+const { kind, title, collapsed = false } = Astro.props;
+---
+
+{kind === 'note' && title ? (
+  <details class="aside aside-note" open={!collapsed}>
+    <summary>{title}</summary>
+    <div class="aside-body"><slot /></div>
+  </details>
+) : (
+  <aside class:list={['aside', `aside-${kind}`]}><slot /></aside>
+)}

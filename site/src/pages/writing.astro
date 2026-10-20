@@ -1,0 +1,27 @@
+---
+import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPosts } from '../lib/posts';
+import '../styles/writing.css';
+
+const [latest, ...rest] = await getPosts();
+---
+
+<Base
+  title="Writing · Michael Leung"
+  description="Notes on post-training, interpretability, sequence modelling, and the occasional brain. Code-first and honest about results."
+  surface="writing"
+  current="writing"
+>
+  <main class="index">
+    <header class="index-head">
+      <p class="kicker">Writing</p>
+      <h1>The long version.</h1>
+      <p>Notes on post-training, interpretability, sequence modelling, and the occasional brain. Code-first, and honest about results, including the ones that did not work. Every post here is a chapter of the <a href="/" data-path="/">living CV</a>, told slowly.</p>
+    </header>
+    {latest && <PostCard post={latest} size="lg" />}
+    <div class="index-grid">
+      {rest.map((post) => <PostCard post={post} />)}
+    </div>
+  </main>
+</Base>

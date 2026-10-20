@@ -1,0 +1,10 @@
+---
+import { coverSeed, coverSvg } from '../core/cover';
+import type { Hue } from '../core/color';
+
+/** A post's generative cover, the same one its card shows on the CV. */
+interface Props { slug: string; hue: Hue; class?: string }
+const { slug, hue, class: cls = '' } = Astro.props;
+---
+
+<Fragment set:html={coverSvg(coverSeed(slug), hue, cls)} />
