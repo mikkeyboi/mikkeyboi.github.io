@@ -1,0 +1,19 @@
+#!/bin/sh
+# Compile rust/ to WebAssembly and embed it as src/kernel/kernel.wasm.ts (see embed-wasm.mjs).
+# Without a local wasm32 target, set CV_WASM_HOST=user@host[:port] to build over ssh.
+set -e
+cd "$(dirname "$0")/.."
+OUT=rust/target/wasm32-unknown-unknown/release/cv_kernel.wasm
+if rustc --print target-libdir --target wasm32-unknown-unknown >/dev/null 2>&1 && [ -d "$(rustc --print target-libdir --target wasm32-unknown-unknown)" ]; then
+  (cd rust && cargo build --release --target wasm32-unknown-unknown)
+elif [ -n "$CV_WASM_HOST" ]; then
+  HOST=${CV_WASM_HOST%:*}; PORT=${CV_WASM_HOST##*:}; [ "$PORT" = "$CV_WASM_HOST" ] && PORT=22
+  rsync -az --delete --exclude target -e "ssh -p $PORT" rust/ "$HOST:.cache/cv-kernel/"
+  ssh -p "$PORT" "$HOST" 'export PATH=$HOME/.cargo/bin:$PATH; cd .cache/cv-kernel && cargo build --release --target wasm32-unknown-unknown'
+  mkdir -p "$(dirname "$OUT")"
+  scp -P "$PORT" "$HOST:.cache/cv-kernel/target/wasm32-unknown-unknown/release/cv_kernel.wasm" "$OUT"
+else
+  echo "No wasm32-unknown-unknown target. Install it (rustup target add wasm32-unknown-unknown) or set CV_WASM_HOST." >&2
+  exit 1
+fi
+node scripts/embed-wasm.mjs "$OUT"

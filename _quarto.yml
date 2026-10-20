@@ -1,8 +1,13 @@
 project:
   type: website
   output-dir: _site
+  # The living CV (living-cv/) is a separate Vite build copied into _site by the workflow.
+  render:
+    - "*.qmd"
+    - "!living-cv/"
   resources:
     - playground/widgets/*.mjs
+    - fonts/*
 
 website:
   title: "Michael Leung"
@@ -17,30 +22,28 @@ website:
   navbar:
     pinned: true
     left:
-      - href: index.qmd
+      - href: writing.qmd
         text: Writing
       - href: playground/index.qmd
         text: Playground
       - href: about.qmd
         text: About
     right:
-      - icon: rss
-        href: index.xml
-        aria-label: RSS feed
       - icon: github
         href: https://github.com/mikkeyboi
         aria-label: GitHub
   page-footer:
     border: false
     left: "© 2026 Michael Leung"
-    center: "[Writing](/) · [Playground](/playground/) · [About](/about.html) · [RSS](/index.xml)"
+    center: "[Living CV](/) · [Writing](/writing.html) · [Playground](/playground/) · [About](/about.html)"
     right: "Built with [Quarto](https://quarto.org)."
 
 format:
   html:
+    # Dark first, so it is the default and matches the living CV; light stays one toggle away.
     theme:
-      light: [cosmo, theme.scss]
       dark: [cosmo, theme-dark.scss]
+      light: [cosmo, theme.scss]
     css: styles.css
     toc: true
     toc-depth: 3

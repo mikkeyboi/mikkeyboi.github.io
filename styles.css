@@ -24,20 +24,20 @@
 }
 
 .quarto-dark {
-  --ink: #e6edf3;
-  --ink-2: #c9d1d9;
-  --muted: #9198a1;
-  --border: #2a2f37;
-  --border-strong: #3a414b;
-  --panel: #161b22;
-  --panel-2: #11151b;
-  --code-inline-bg: #1b2129;
-  --accent: #589bff;
-  --accent-rgb: 88, 155, 255;
-  --navbar-bg: rgba(13, 17, 23, 0.85);
-  --selection-bg: #2d4a7c;
-  --selection-fg: #e6edf3;
-  --chip-hover-bg: #222a35;
+  --ink: #e9edf4;
+  --ink-2: #b8c2d1;
+  --muted: #8d99ab;
+  --border: #1c2330;
+  --border-strong: #2a3342;
+  --panel: #0a0f19;
+  --panel-2: #070b13;
+  --code-inline-bg: #0f1520;
+  --accent: #39e1c6;
+  --accent-rgb: 57, 225, 198;
+  --navbar-bg: rgba(4, 6, 11, 0.85);
+  --selection-bg: rgba(255, 154, 90, 0.35);
+  --selection-fg: #e9edf4;
+  --chip-hover-bg: #141b27;
 }
 
 /* ---------- Layout rhythm ---------- */
