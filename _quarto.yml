@@ -1,10 +1,10 @@
 project:
   type: website
   output-dir: _site
-  # The living CV (living-cv/) is a separate Vite build copied into _site by the workflow.
+  # The Astro site (site/, the living CV for now) is built separately and copied into _site by the workflow.
   render:
     - "*.qmd"
-    - "!living-cv/"
+    - "!site/"
   resources:
     - playground/widgets/*.mjs
     - fonts/*

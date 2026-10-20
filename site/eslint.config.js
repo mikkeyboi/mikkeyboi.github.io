@@ -2,12 +2,12 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/', 'rust/', 'src/kernel/kernel.wasm.ts'] },
+  { ignores: ['dist/', '.astro/', 'rust/', 'src/kernel/kernel.wasm.ts'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    // Build scripts run in Node.
-    files: ['scripts/**/*.mjs'],
+    // Build scripts and the Astro config run in Node.
+    files: ['scripts/**/*.mjs', 'astro.config.mjs'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
   },
   {

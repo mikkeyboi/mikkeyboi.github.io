@@ -6,35 +6,38 @@ Personal site + blog. Built with [Quarto](https://quarto.org), deployed to GitHu
 
 ```
 .
-├── living-cv/              Home page: the living CV (Vite + TypeScript, Rust → WebAssembly)
+├── site/                   Astro site; home page is the living CV (TypeScript, Rust → WebAssembly)
 ├── _quarto.yml             Site config (theme, navbar, render list)
 ├── writing.qmd             Writing index = posts listing (/writing.html)
 ├── about.qmd               About page
 ├── playground/             Interactive simulations (OJS widgets)
 ├── posts/NN-slug/          One post per folder; URLs stay /posts/NN-slug/
-├── fonts/                  Ubuntu, shared by the living CV and the Quarto theme
+├── fonts/                  Ubuntu, for the Quarto theme (the Astro site bundles its own copy)
 ├── styles.css, theme*.scss Quarto styling (dark first, matching the living CV)
-└── .github/workflows/publish.yml   Builds the living CV, renders Quarto, merges both, deploys
+└── .github/workflows/publish.yml   Builds the Astro site, renders Quarto, merges both, deploys
 ```
 
 The published site is one folder: Quarto renders posts, the playground and the writing index into
-`_site/`, then the workflow copies `living-cv/dist/` over it, so `/` is the living CV and everything
-else keeps its URL. Pull requests run the same build without deploying.
+`_site/`, then the workflow copies the Astro build (`site/dist/`) over it, so `/` is the living CV and
+everything else keeps its URL. Pull requests run the same build without deploying.
+
+The writing is moving from Quarto into the Astro site so the CV and the posts share one design system
+and one navigation shell. Until that lands, both builds run side by side.
 
 ## Local preview
 
 ```bash
 # Install Quarto first: https://quarto.org/docs/get-started/
 quarto preview              # live-reload at http://localhost:4444 (posts, playground, writing)
-(cd living-cv && npm ci && npm run dev)   # the living CV on its own
+(cd site && npm ci && npm run dev)        # the Astro site (living CV) on its own
 
 # The whole site, as published:
-(cd living-cv && npm ci && npm run build) && quarto render && cp -R living-cv/dist/. _site/
+(cd site && npm ci && npm run build) && quarto render && cp -R site/dist/. _site/
 ```
 
 ## Publishing
 
-When this folder is pushed to `mikkeyboi/mikkeyboi.github.io` (the `main` branch), the Actions workflow builds the living CV, renders Quarto, and publishes to GitHub Pages automatically. Site URL: <https://mikkeyboi.github.io>.
+When this folder is pushed to `mikkeyboi/mikkeyboi.github.io` (the `main` branch), the Actions workflow builds the Astro site, renders Quarto, and publishes to GitHub Pages automatically. Site URL: <https://mikkeyboi.github.io>.
 
 **One-time setup on the GitHub repo:**
 

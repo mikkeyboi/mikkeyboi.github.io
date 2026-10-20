@@ -1,0 +1,15 @@
+---
+/** The fixed top bar. data-path links are rewritten at runtime so the private preview points at the public site. */
+const LINKS = [
+  { label: 'Writing', path: '/writing.html' },
+  { label: 'Playground', path: '/playground/' },
+  { label: 'About', path: '/about.html' },
+];
+---
+
+<header class="bar">
+  <a class="bar-name" href={`${import.meta.env.BASE_URL}#top`}>Michael Leung</a>
+  <nav class="bar-links" aria-label="Links">
+    {LINKS.map(({ label, path }) => <a href={path} data-path={path}>{label}</a>)}
+  </nav>
+</header>

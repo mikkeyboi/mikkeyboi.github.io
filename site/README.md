@@ -1,12 +1,12 @@
-# Living CV
+# Site
 
-A scroll-driven, canvas-animated CV. Vite + TypeScript with Rust compiled to WebAssembly, and no runtime dependencies.
+The Astro project behind mikkeyboi.github.io. Its home page is the living CV: a scroll-driven, canvas-animated CV in TypeScript with Rust compiled to WebAssembly. The writing (posts, playground, listing) is moving here from Quarto so every page shares one design system.
 
 ```
 npm install
-npm run dev      # local preview
-npm run build    # static site in dist/ (relative paths; host it anywhere)
-npm run check    # types, lint (ESLint + typescript-eslint) and tests (Vitest)
+npm run dev      # local preview (Astro dev server)
+npm run build    # static site in dist/; SITE_BASE=/sub/path/ builds for a subfolder
+npm run check    # astro check (types), lint (ESLint + typescript-eslint) and tests (Vitest)
 ```
 
 To rebuild the Rust kernels you need a `wasm32-unknown-unknown` target. The build embeds them in `src/kernel/kernel.wasm.ts`, so `npm run build` alone doesn't need Rust:
@@ -19,6 +19,9 @@ cd rust && cargo test
 
 ## Layout
 
+- `src/pages/` holds the routes. `index.astro` mounts the living CV. `astro.config.mjs` uses `build.format: 'preserve'`, so a page's output path is its source path.
+- `src/layouts/Base.astro` and `src/components/SiteHeader.astro` are the shell every page shares.
+- `src/styles/tokens.css` holds the design tokens (palette, type, spacing) that every page uses.
 - `src/content/` holds the words: one entry per chapter in `chapters.ts` (caption beats and notes pinned to the visual), plus `refs.ts`, `posts.ts` and `profile.ts`. Most edits start here.
 - `src/scenes/` holds one class per chapter visual. Each extends `Scene` and implements `draw(p, t)` for scroll progress `p` (0..1) and time `t`. It calls `mark(id, x, y)` to expose anchors that notes can pin to.
 - `src/core/` holds the framework. `Chapter` owns a sticky stage and composes its parts, and `Engine` runs the frame loop, visibility, the chapter rail and analytics. `Painter` is the drawing vocabulary, and the math, colour and site helpers sit beside it.

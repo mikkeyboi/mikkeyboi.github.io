@@ -1,6 +1,6 @@
 name: Build and publish site
 
-# Rust kernels -> living CV -> Quarto posts -> one site. Pull requests run every check and build
+# Rust kernels -> Astro site (living CV) -> Quarto posts -> one site. Pull requests run every check and build
 # the whole site without deploying; pushes to main also deploy to GitHub Pages.
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: living-cv/rust
+        working-directory: site/rust
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -30,7 +30,7 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: living-cv/rust
+          workspaces: site/rust
       - run: cargo fmt --check
       - run: cargo clippy --release --all-targets -- -D warnings
       - run: cargo test --release
@@ -38,26 +38,26 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cv-kernel-wasm
-          path: living-cv/rust/target/wasm32-unknown-unknown/release/cv_kernel.wasm
+          path: site/rust/target/wasm32-unknown-unknown/release/cv_kernel.wasm
 
   web:
-    name: Living CV (types, lint, tests, build)
+    name: Astro site (astro check, lint, tests, build)
     needs: rust
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: living-cv
+        working-directory: site
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: living-cv/package-lock.json
+          cache-dependency-path: site/package-lock.json
       - uses: actions/download-artifact@v4
         with:
           name: cv-kernel-wasm
-          path: living-cv/wasm
+          path: site/wasm
       # The site always ships the kernel compiled from this commit's Rust source.
       - run: node scripts/embed-wasm.mjs wasm/cv_kernel.wasm
       - run: npm ci
@@ -65,8 +65,8 @@ jobs:
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: living-cv-dist
-          path: living-cv/dist
+          name: site-dist
+          path: site/dist
 
   site:
     name: Site (Quarto render, assemble)
@@ -80,14 +80,15 @@ jobs:
       - run: quarto render
       - uses: actions/download-artifact@v4
         with:
-          name: living-cv-dist
-          path: living-cv-dist
+          name: site-dist
+          path: site-dist
       - name: Assemble
         run: |
-          cp -R living-cv-dist/. _site/
+          cp -R site-dist/. _site/
           test -f _site/index.html
           test -f _site/writing.html
-          test -f _site/posts/05-h005-refusal-direction/index.html
+          # Every post keeps its /posts/NN-slug/ URL.
+          for d in posts/*/; do test -f "_site/${d}index.html"; done
           test -f _site/playground/index.html
           test -f _site/playground/widgets/refusal_sim.mjs
       - uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,20 @@
+/* Design tokens shared by every page: the CV and the writing use the same palette, type and spacing. */
+@font-face { font-family: "Ubuntu"; src: url("../assets/fonts/Ubuntu-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Ubuntu"; src: url("../assets/fonts/Ubuntu-Medium.ttf") format("truetype"); font-weight: 500 700; font-display: swap; }
+@font-face { font-family: "Ubuntu Mono"; src: url("../assets/fonts/UbuntuMono-Regular.ttf") format("truetype"); font-display: swap; }
+
+:root {
+  --ink: #04060b;
+  --ink-2: #0a0f19;
+  --line: rgba(150, 180, 220, 0.14);
+  --text: #e9edf4;
+  --soft: #b8c2d1;
+  --muted: #8d99ab;
+  --copper: #ff9a5a;
+  --teal: #39e1c6;
+  --red: #ff4d6d;
+  --violet: #a594ff;
+  --sans: "Ubuntu", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Ubuntu Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gutter: clamp(16px, 4vw, 56px);
+}

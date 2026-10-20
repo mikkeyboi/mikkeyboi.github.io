@@ -3,7 +3,6 @@
 /_freeze/
 *.html
 !_includes/*.html
-!living-cv/index.html
 .DS_Store
 .ipynb_checkpoints/
 .venv/
@@ -16,6 +15,7 @@ node_modules/
 .quarto-preview.log
 .quarto-preview.err.log
 
-living-cv/dist/
-living-cv/rust/target/
-living-cv/wasm/
+site/dist/
+site/.astro/
+site/rust/target/
+site/wasm/
