@@ -2,7 +2,7 @@ import type { SceneCtor } from '../core/chapter';
 import type { SceneKey } from '../content/types';
 import { HeroScene } from './hero';
 import { BridgeScene } from './bridge';
-import { NeuroScene } from './neuro';
+import { NeuroScene } from './neuro/scene';
 import { VoiceScene } from './voice';
 import { BuildingScene } from './building';
 import { ObserveScene } from './observe';

@@ -18,3 +18,4 @@ node_modules/
 
 living-cv/dist/
 living-cv/rust/target/
+living-cv/wasm/

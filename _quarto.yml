@@ -29,16 +29,13 @@ website:
       - href: about.qmd
         text: About
     right:
-      - icon: rss
-        href: writing.xml
-        aria-label: RSS feed
       - icon: github
         href: https://github.com/mikkeyboi
         aria-label: GitHub
   page-footer:
     border: false
     left: "© 2026 Michael Leung"
-    center: "[Living CV](/) · [Writing](/writing.html) · [Playground](/playground/) · [About](/about.html) · [RSS](/writing.xml)"
+    center: "[Living CV](/) · [Writing](/writing.html) · [Playground](/playground/) · [About](/about.html)"
     right: "Built with [Quarto](https://quarto.org)."
 
 format:

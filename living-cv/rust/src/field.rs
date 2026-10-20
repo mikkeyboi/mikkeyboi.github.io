@@ -77,11 +77,11 @@ impl Field {
                 }
             })
             .collect();
-        Field { parts, centres: [Centre::default(); THEMES], out: vec![0.0; n * STRIDE] }
-    }
-
-    pub fn len(&self) -> usize {
-        self.parts.len()
+        Field {
+            parts,
+            centres: [Centre::default(); THEMES],
+            out: vec![0.0; n * STRIDE],
+        }
     }
 
     /// Writes x, y, u (how far it has joined its theme, 0..1) and flags for the first `n` particles.
@@ -107,7 +107,9 @@ impl Field {
                 x += (ox - x) * u;
                 y += (oy - y) * u;
             }
-            let flags = (v.bad as u32) * flag::BAD | (below as u32) * flag::BELOW | (v.cluster as u32) << 2;
+            let flags = ((v.bad as u32) * flag::BAD)
+                | ((below as u32) * flag::BELOW)
+                | ((v.cluster as u32) << 2);
             let o = i * STRIDE;
             self.out[o] = x as f32;
             self.out[o + 1] = y as f32;
@@ -125,16 +127,31 @@ mod tests {
     fn settled_particles_sit_inside_their_cluster() {
         let mut field = Field::new(400);
         for (i, c) in field.centres.iter_mut().enumerate() {
-            *c = Centre { x: 100.0 + i as f64 * 100.0, y: 500.0, r: 30.0 };
+            *c = Centre {
+                x: 100.0 + i as f64 * 100.0,
+                y: 500.0,
+                r: 30.0,
+            };
         }
-        let frame = Frame { t: 3.0, x: 0.0, y: 0.0, w: 600.0, h: 600.0, membrane_y: 200.0, membrane: 1.0, cluster: 1.0 };
+        let frame = Frame {
+            t: 3.0,
+            x: 0.0,
+            y: 0.0,
+            w: 600.0,
+            h: 600.0,
+            membrane_y: 200.0,
+            membrane: 1.0,
+            cluster: 1.0,
+        };
         field.step(&frame, 400);
         for i in 0..400 {
             let o = i * STRIDE;
             let flags = field.out[o + 3] as u32;
             if field.out[o + 2] >= 1.0 && flags & flag::BELOW != 0 {
                 let c = field.centres[(flags >> 2) as usize];
-                let d = ((field.out[o] as f64 - c.x).powi(2) + (field.out[o + 1] as f64 - c.y).powi(2)).sqrt();
+                let d = ((field.out[o] as f64 - c.x).powi(2)
+                    + (field.out[o + 1] as f64 - c.y).powi(2))
+                .sqrt();
                 assert!(d <= c.r + 1e-3);
             }
         }

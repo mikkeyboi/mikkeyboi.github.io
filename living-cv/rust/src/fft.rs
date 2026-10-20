@@ -67,11 +67,18 @@ mod tests {
     #[test]
     fn pure_tone_lands_in_its_bin() {
         let n = 256;
-        let mut re: Vec<f32> = (0..n).map(|i| (TAU * 8.0 * i as f32 / n as f32).cos()).collect();
+        let mut re: Vec<f32> = (0..n)
+            .map(|i| (TAU * 8.0 * i as f32 / n as f32).cos())
+            .collect();
         let mut im = vec![0.0; n];
         fft(&mut re, &mut im, false);
         let mag: Vec<f32> = (0..n / 2).map(|k| re[k].hypot(im[k])).collect();
-        let peak = mag.iter().enumerate().max_by(|a, b| a.1.total_cmp(b.1)).unwrap().0;
+        let peak = mag
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.total_cmp(b.1))
+            .unwrap()
+            .0;
         assert_eq!(peak, 8);
     }
 }

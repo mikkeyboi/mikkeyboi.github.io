@@ -8,7 +8,6 @@ listing:
   type: default
   categories: true
   fields: [date, title, description, categories, reading-time]
-  feed: true
   sort-ui: false
   filter-ui: false
 ---

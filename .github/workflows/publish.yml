@@ -1,77 +1,106 @@
-name: Publish Quarto site to GitHub Pages
+name: Build and publish site
 
+# Rust kernels -> living CV -> Quarto posts -> one site. Pull requests run every check and build
+# the whole site without deploying; pushes to main also deploy to GitHub Pages.
 on:
   push:
     branches: [main]
-  # Pull requests build the whole site (no deploy) so a change is verified before it ships.
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  rust:
+    name: Rust kernels (fmt, clippy, test, wasm)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: living-cv/rust
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          version: "1.6.42"
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: living-cv/rust
+      - run: cargo fmt --check
+      - run: cargo clippy --release --all-targets -- -D warnings
+      - run: cargo test --release
+      - run: cargo build --release --target wasm32-unknown-unknown
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cv-kernel-wasm
+          path: living-cv/rust/target/wasm32-unknown-unknown/release/cv_kernel.wasm
 
-      # Uncomment if posts use Python execution (matplotlib, etc.)
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: "3.11"
-      # - name: Install Python deps
-      #   run: pip install -r requirements.txt
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+  web:
+    name: Living CV (types, lint, tests, build)
+    needs: rust
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: living-cv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: living-cv/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: cv-kernel-wasm
+          path: living-cv/wasm
+      # The site always ships the kernel compiled from this commit's Rust source.
+      - run: node scripts/embed-wasm.mjs wasm/cv_kernel.wasm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: living-cv-dist
+          path: living-cv/dist
 
-      # The living CV is the home page. Its Rust kernels are pre-compiled and embedded
-      # (living-cv/src/kernel/kernel.wasm.ts), so this step needs no Rust toolchain.
-      - name: Build living CV
-        working-directory: living-cv
+  site:
+    name: Site (Quarto render, assemble)
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.6.42"
+      - run: quarto render
+      - uses: actions/download-artifact@v4
+        with:
+          name: living-cv-dist
+          path: living-cv-dist
+      - name: Assemble
         run: |
-          npm ci
-          npm run build
-
-      - name: Render site
-        run: quarto render
-
-      - name: Assemble site
-        run: |
-          cp -R living-cv/dist/. _site/
-          # Keep the old feed URL working for existing subscribers.
-          cp _site/writing.xml _site/index.xml
+          cp -R living-cv-dist/. _site/
           test -f _site/index.html
+          test -f _site/writing.html
           test -f _site/posts/05-h005-refusal-direction/index.html
           test -f _site/playground/index.html
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+          test -f _site/playground/widgets/refusal_sim.mjs
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
 
   deploy:
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: site
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -124,8 +124,28 @@ pub unsafe extern "C" fn field_centre(h: *mut Field, i: u32, x: f64, y: f64, r: 
 /// `h` must be a live handle from `field_new`.
 #[no_mangle]
 #[allow(clippy::too_many_arguments)]
-pub unsafe extern "C" fn field_step(h: *mut Field, n: u32, t: f64, x: f64, y: f64, w: f64, hgt: f64, membrane_y: f64, membrane: f64, cluster: f64) {
-    let frame = Frame { t, x, y, w, h: hgt, membrane_y, membrane, cluster };
+pub unsafe extern "C" fn field_step(
+    h: *mut Field,
+    n: u32,
+    t: f64,
+    x: f64,
+    y: f64,
+    w: f64,
+    hgt: f64,
+    membrane_y: f64,
+    membrane: f64,
+    cluster: f64,
+) {
+    let frame = Frame {
+        t,
+        x,
+        y,
+        w,
+        h: hgt,
+        membrane_y,
+        membrane,
+        cluster,
+    };
     handle(h).step(&frame, n as usize);
 }
 

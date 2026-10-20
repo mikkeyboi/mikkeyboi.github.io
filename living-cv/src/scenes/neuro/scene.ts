@@ -1,7 +1,8 @@
-import { Scene } from '../core/scene';
-import { TAU, clamp, ease, frac, hash, lerp, seg, type Box, type Point } from '../core/math';
-import { css, type Hue } from '../core/color';
-import { kernels, type NeuralKernel } from '../kernel';
+import { Scene } from '../../core/scene';
+import { TAU, clamp, ease, frac, hash, lerp, seg, type Box, type Point } from '../../core/math';
+import { css, type Hue } from '../../core/color';
+import { kernels, type NeuralKernel } from '../../kernel';
+import { STOP_ON, TARGET_ON, SACCADE, TRIAL, TimeWarp, burstAt, gazeAt, isStop, trialAt } from './task';
 
 /** Head profile facing right, in head-radius units. */
 const HEAD: [number, number][] = [[-0.42, 1.15], [-0.62, 0.75], [-0.98, 0.25], [-1.0, -0.3], [-0.72, -0.82], [-0.1, -1.08], [0.5, -0.92], [0.86, -0.5], [0.92, -0.2],
@@ -19,55 +20,11 @@ const LANE_SECONDS = 2.5;
 const FS = 1000;
 /** A fresh recording window is synthesized and fit this often (seconds of scene time). */
 const STEP_EVERY = 5;
-/** Countermanding trial length and the moments within it (fractions of a trial). */
-const TRIAL = 1.8, TARGET_ON = 0.3, STOP_ON = 0.38, SACCADE = 0.45;
-/** Which trials carry a stop signal: about half, never more than two go trials in a row. */
-const STOP_PATTERN = [false, true, false, true, true, false, false, true];
-/** Neural time runs slower than wall time so a first-time viewer can follow it. */
-const SIM_RATE = 0.35;
-/** Scroll range in the stop beat where time freezes on a stop signal, with annotations. */
-const PAUSE_FROM = 0.385, PAUSE_TO = 0.455;
-/** How far past the stop signal (seconds) time freezes, so the burst after it is in view. */
-const HOLD_AT = 0.95;
-const isStop = (k: number) => STOP_PATTERN[((k % STOP_PATTERN.length) + STOP_PATTERN.length) % STOP_PATTERN.length];
-
 const STIM = [
   { name: 'AMPLITUDE', from: 0.25, to: 0.58, value: '2.5 mA' },
   { name: 'FREQUENCY', from: 0.4, to: 0.72, value: '130 Hz' },
   { name: 'PULSE WIDTH', from: 0.6, to: 0.38, value: '60 µs' },
 ];
-
-interface Trial { k: number; f: number; stop: boolean; target: number }
-
-/** The countermanding task at scene time t: fixate, look to the target, unless told to stop. */
-function trialAt(t: number): Trial {
-  const k = Math.floor(t / TRIAL);
-  return { k, f: frac(t / TRIAL), stop: isStop(k), target: hash(k * 2.3) * 2 - 1 };
-}
-
-/** Horizontal gaze (-1..1) at time t, as the eye tracker would record it. */
-function gazeAt(t: number): number {
-  const tr = trialAt(t);
-  if (tr.stop || tr.f < SACCADE) return 0;
-  return tr.target * ease(clamp((tr.f - SACCADE) / 0.05));
-}
-
-/** The most recent stop-signal time at or before t, if any in the last few trials. */
-function lastStopBefore(t: number): number | null {
-  for (let k = Math.floor(t / TRIAL); k > Math.floor(t / TRIAL) - 10; k--) {
-    const st = (k + STOP_ON) * TRIAL;
-    if (isStop(k) && st <= t) return st;
-  }
-  return null;
-}
-
-/** Beta burst strength at time t: stop signals provoke a burst shortly after they appear. */
-function burstAt(t: number): number {
-  const tr = trialAt(t);
-  if (!tr.stop) return 0;
-  const since = (tr.f - STOP_ON) * TRIAL;
-  return since < -0.05 ? 0 : Math.exp(-(((since - 0.22) / 0.12) ** 2));
-}
 
 /**
  * Awake deep brain stimulation surgery: the electrode descends, three sensor clocks align,
@@ -147,26 +104,10 @@ export class NeuroScene extends Scene {
   }
 
   /** Neural time: slowed, and frozen on a stop signal while the reader is in the pause zone. */
-  private sim = 0;
-  private lastWall = -1;
-  private rate = SIM_RATE;
-  private hold: number | null = null;
-
-  private advance(p: number, wall: number): number {
-    const dt = this.lastWall < 0 ? 0 : clamp(wall - this.lastWall, 0, 0.1);
-    this.lastWall = wall;
-    let target = SIM_RATE;
-    if (p >= PAUSE_FROM && p < PAUSE_TO) {
-      const st = lastStopBefore(this.sim);
-      if (st !== null && this.sim - st >= HOLD_AT) { target = 0; this.hold = st; }
-    } else this.hold = null;
-    this.rate = lerp(this.rate, target, target === 0 ? 0.2 : 0.05);
-    this.sim += dt * this.rate;
-    return this.sim;
-  }
+  private readonly time = new TimeWarp();
 
   draw(p: number, wall: number): void {
-    const t = this.advance(p, wall);
+    const t = this.time.advance(p, wall);
     const e = ease(seg(p, 0.02, 0.24));
     const lanes = ease(seg(p, 0.12, 0.2));
     const sync = ease(seg(p, 0.24, 0.34));
@@ -355,7 +296,7 @@ export class NeuroScene extends Scene {
     }
     const epochBox = { x: Pn.x, y: Pn.y + lanesH + 18, w: Pn.w, h: Pn.h - lanesH - 18 };
     if (stop > 0.01) this.drawEpochs(t, stop * a, epochBox);
-    if (this.hold !== null) this.drawPauseNotes(this.hold, X, lanesH, epochBox, a * (1 - this.rate / SIM_RATE));
+    if (this.time.hold !== null) this.drawPauseNotes(this.time.hold, X, lanesH, epochBox, a * this.time.frozen);
     this.mark('streams', Pn.x + Pn.w * 0.5, Pn.y);
   }
 

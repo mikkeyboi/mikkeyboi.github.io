@@ -45,7 +45,7 @@ export function writingSection(): HTMLElement {
     el('h2', '', 'The long version.'),
     el('p', '', 'Every chapter here has a slower, deeper read, in a conventional reading view.'),
   );
-  const all = el('a', 'all-writing', 'All writing and the RSS feed →');
+  const all = el('a', 'all-writing', 'All writing →');
   all.href = siteUrl('/writing.html');
   head.append(all);
   const cards = el('div', 'cards');

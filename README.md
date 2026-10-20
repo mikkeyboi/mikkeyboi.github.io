@@ -8,7 +8,7 @@ Personal site + blog. Built with [Quarto](https://quarto.org), deployed to GitHu
 .
 ├── living-cv/              Home page: the living CV (Vite + TypeScript, Rust → WebAssembly)
 ├── _quarto.yml             Site config (theme, navbar, render list)
-├── writing.qmd             Writing index = posts listing (/writing.html, feed at /writing.xml)
+├── writing.qmd             Writing index = posts listing (/writing.html)
 ├── about.qmd               About page
 ├── playground/             Interactive simulations (OJS widgets)
 ├── posts/NN-slug/          One post per folder; URLs stay /posts/NN-slug/

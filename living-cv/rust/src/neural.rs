@@ -107,12 +107,18 @@ impl Neural {
         for k in 0..N {
             let kk = if k <= N / 2 { k } else { N - k };
             let f = kk as f32 * FS / N as f32;
-            let g = if kk == 0 { 0.0 } else { f.powf(-EXPONENT / 2.0) };
+            let g = if kk == 0 {
+                0.0
+            } else {
+                f.powf(-EXPONENT / 2.0)
+            };
             self.re[k] *= g;
             self.im[k] *= g;
         }
         fft(&mut self.re, &mut self.im, true);
-        let rms = (self.re.iter().map(|v| v * v).sum::<f32>() / N as f32).sqrt().max(1e-9);
+        let rms = (self.re.iter().map(|v| v * v).sum::<f32>() / N as f32)
+            .sqrt()
+            .max(1e-9);
 
         let phase_b = self.rng.uniform() * TAU;
         let phase_a = self.rng.uniform() * TAU;
@@ -121,7 +127,10 @@ impl Neural {
             let t = self.clock + i as f32 / FS;
             // Beta waxes and wanes in bursts, as it does in Parkinsonian STN recordings.
             let envelope = 0.55 + 0.45 * (TAU * 0.9 * t + burst).sin();
-            let beta = beta_gain * 0.9 * envelope * (TAU * 19.0 * t + phase_b + 0.4 * (TAU * 0.3 * t).sin()).sin();
+            let beta = beta_gain
+                * 0.9
+                * envelope
+                * (TAU * 19.0 * t + phase_b + 0.4 * (TAU * 0.3 * t).sin()).sin();
             let alpha = 0.18 * (TAU * 9.0 * t + phase_a).sin();
             self.signal[i] = self.re[i] / rms + beta + alpha;
         }
@@ -150,27 +159,33 @@ impl Neural {
                 im[i] = 0.0;
             }
             fft(re, im, false);
-            for k in 0..BINS {
-                acc[k] += re[k] * re[k] + im[k] * im[k];
+            for ((a, r), i) in acc.iter_mut().zip(re.iter()).zip(im.iter()) {
+                *a += r * r + i * i;
             }
             segments += 1;
             start += HOP;
         }
         let norm = 1.0 / (segments as f32 * FS * SEG as f32 * 0.375);
-        for k in 0..BINS {
-            self.power[k] = (acc[k] * norm).max(1e-12).log10();
+        for (p, a) in self.power.iter_mut().zip(acc.iter()) {
+            *p = (a * norm).max(1e-12).log10();
         }
     }
 
     fn fit_spectrum(&mut self) {
-        let idx: Vec<usize> = (0..BINS).filter(|&k| self.freqs[k] >= FIT_LO && self.freqs[k] <= FIT_HI).collect();
+        let idx: Vec<usize> = (0..BINS)
+            .filter(|&k| self.freqs[k] >= FIT_LO && self.freqs[k] <= FIT_HI)
+            .collect();
         let xs: Vec<f32> = idx.iter().map(|&k| self.freqs[k].log10()).collect();
         let ys: Vec<f32> = idx.iter().map(|&k| self.power[k]).collect();
 
         // Initial fit on everything, then refit on the points that sit lowest above it,
         // so periodic peaks do not drag the aperiodic line upward.
         let (b0, m0) = line_fit(&xs, &ys, None);
-        let flat: Vec<f32> = xs.iter().zip(&ys).map(|(x, y)| (y - (b0 + m0 * x)).max(0.0)).collect();
+        let flat: Vec<f32> = xs
+            .iter()
+            .zip(&ys)
+            .map(|(x, y)| (y - (b0 + m0 * x)).max(0.0))
+            .collect();
         let mut sorted = flat.clone();
         sorted.sort_by(|a, b| a.total_cmp(b));
         let thresh = sorted[((sorted.len() as f32 * ROBUST_KEEP) as usize).min(sorted.len() - 1)];
@@ -205,7 +220,13 @@ impl Neural {
 
         let mean = ys.iter().sum::<f32>() / ys.len() as f32;
         let ss_tot: f32 = ys.iter().map(|y| (y - mean).powi(2)).sum();
-        let ss_res: f32 = xs.iter().zip(&ys).zip(&mask).filter(|(_, &keep)| keep).map(|((x, y), _)| (y - (b + m * x)).powi(2)).sum();
+        let ss_res: f32 = xs
+            .iter()
+            .zip(&ys)
+            .zip(&mask)
+            .filter(|(_, &keep)| keep)
+            .map(|((x, y), _)| (y - (b + m * x)).powi(2))
+            .sum();
         self.fit = Fit {
             offset: b,
             exponent: -m,
@@ -221,7 +242,7 @@ impl Neural {
 fn line_fit(xs: &[f32], ys: &[f32], mask: Option<&[bool]>) -> (f32, f32) {
     let (mut n, mut sx, mut sy, mut sxx, mut sxy) = (0.0f32, 0.0, 0.0, 0.0, 0.0);
     for i in 0..xs.len() {
-        if mask.map_or(true, |m| m[i]) {
+        if mask.is_none_or(|m| m[i]) {
             n += 1.0;
             sx += xs[i];
             sy += ys[i];
@@ -243,8 +264,16 @@ mod tests {
         for _ in 0..4 {
             n.step(1.0, 0.0);
         }
-        assert!((n.fit.exponent - EXPONENT).abs() < 0.35, "exponent {}", n.fit.exponent);
-        assert!((n.fit.peak_hz - 19.0).abs() <= 4.0, "peak at {}", n.fit.peak_hz);
+        assert!(
+            (n.fit.exponent - EXPONENT).abs() < 0.35,
+            "exponent {}",
+            n.fit.exponent
+        );
+        assert!(
+            (n.fit.peak_hz - 19.0).abs() <= 4.0,
+            "peak at {}",
+            n.fit.peak_hz
+        );
     }
 
     #[test]
@@ -253,12 +282,18 @@ mod tests {
         // power while excluding the noise the broad band also collects.
         let mut n = Neural::new(11);
         n.step(1.0, 0.0);
-        let (lo, hi) = (n.fit.peak_hz - n.fit.peak_width / 2.0, n.fit.peak_hz + n.fit.peak_width / 2.0);
+        let (lo, hi) = (
+            n.fit.peak_hz - n.fit.peak_width / 2.0,
+            n.fit.peak_hz + n.fit.peak_width / 2.0,
+        );
         n.band_pass(0, 13.0, 30.0);
         n.band_pass(1, lo, hi);
         let energy = |v: &[f32]| v.iter().map(|x| x * x).sum::<f32>();
         let (broad, narrow) = (energy(&n.band[0]), energy(&n.band[1]));
-        assert!(narrow < broad && narrow > 0.35 * broad, "narrow {narrow} broad {broad}");
+        assert!(
+            narrow < broad && narrow > 0.35 * broad,
+            "narrow {narrow} broad {broad}"
+        );
     }
 
     #[test]
