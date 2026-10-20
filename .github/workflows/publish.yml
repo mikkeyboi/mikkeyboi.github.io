@@ -3,6 +3,8 @@ name: Publish Quarto site to GitHub Pages
 on:
   push:
     branches: [main]
+  # Pull requests build the whole site (no deploy) so a change is verified before it ships.
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -34,8 +36,32 @@ jobs:
       # - name: Install Python deps
       #   run: pip install -r requirements.txt
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: living-cv/package-lock.json
+
+      # The living CV is the home page. Its Rust kernels are pre-compiled and embedded
+      # (living-cv/src/kernel/kernel.wasm.ts), so this step needs no Rust toolchain.
+      - name: Build living CV
+        working-directory: living-cv
+        run: |
+          npm ci
+          npm run build
+
       - name: Render site
         run: quarto render
+
+      - name: Assemble site
+        run: |
+          cp -R living-cv/dist/. _site/
+          # Keep the old feed URL working for existing subscribers.
+          cp _site/writing.xml _site/index.xml
+          test -f _site/index.html
+          test -f _site/posts/05-h005-refusal-direction/index.html
+          test -f _site/playground/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -43,6 +69,7 @@ jobs:
           path: ./_site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

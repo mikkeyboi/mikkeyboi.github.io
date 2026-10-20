@@ -1,0 +1,16 @@
+{
+  "name": "living-cv",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Michael Leung's living CV: a scroll-driven, canvas-animated journey.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vite": "5.4.10"
+  }
+}

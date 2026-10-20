@@ -3,6 +3,7 @@
 /_freeze/
 *.html
 !_includes/*.html
+!living-cv/index.html
 .DS_Store
 .ipynb_checkpoints/
 .venv/
@@ -14,3 +15,6 @@ node_modules/
 # Quarto preview logs (local only)
 .quarto-preview.log
 .quarto-preview.err.log
+
+living-cv/dist/
+living-cv/rust/target/

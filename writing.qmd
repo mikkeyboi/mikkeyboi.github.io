@@ -1,5 +1,5 @@
 ---
-pagetitle: "Michael Min Wah Leung"
+pagetitle: "Writing — Michael Min Wah Leung"
 page-layout: full
 title-block-banner: false
 listing:
@@ -14,8 +14,6 @@ listing:
 ---
 
 ::: {.home-hero}
-# Michael Min Wah Leung
-Notes on post-training, sequence modelling, and the occasional brain. Code-first, results-honest, written by an ML engineer with a research background in neuroscience.
+# Writing
+Notes on post-training, interpretability, sequence modelling, and the occasional brain. Code-first and honest about results. For the visual version of this work, see the [living CV](/).
 :::
-
-## Writing
