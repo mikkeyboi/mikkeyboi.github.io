@@ -1,0 +1,19 @@
+---
+import './sims.css';
+
+/** The frame around an interactive figure: a label, then the placeholder its widget mounts into. */
+interface Props { sim: string; props: unknown; label: string }
+const { sim, props, label } = Astro.props;
+---
+
+<figure class="sim">
+  <figcaption class="sim-label">{label}</figcaption>
+  <div data-sim={sim} data-props={JSON.stringify(props)}>
+    <p class="sim-loading">Loading the simulation…</p>
+  </div>
+</figure>
+
+<script>
+  import { mountSims } from './mount';
+  void mountSims();
+</script>

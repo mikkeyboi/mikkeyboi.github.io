@@ -1,0 +1,58 @@
+---
+/**
+ * The document shell every page shares: metadata, social cards, analytics and the site header.
+ * Pages add their own styles and scripts.
+ */
+import '../styles/base.css';
+import SiteHeader from '../components/SiteHeader.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Analytics surface: living-cv, writing, post or playground. */
+  surface: string;
+  /** Header link to mark as the current section. */
+  current?: 'cv' | 'writing' | 'playground';
+  /** Social card image, already resolved to a URL. */
+  image?: string;
+  type?: 'website' | 'article';
+}
+
+const { title, description, surface, current, image, type = 'website' } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const card = image ? new URL(image, Astro.site).href : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#04060b" />
+    <meta name="color-scheme" content="dark" />
+    <title>{title}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2304060b'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%23ff9a5a'/%3E%3C/svg%3E" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {card && <meta property="og:image" content={card} />}
+    <meta name="twitter:card" content={card ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:creator" content="@mikkeyboi" />
+    <slot name="head" />
+  </head>
+  <body data-surface={surface}>
+    <SiteHeader current={current} />
+    <slot />
+    <script>
+      import { initAnalytics } from '../core/analytics';
+      import { siteUrl } from '../core/site';
+
+      initAnalytics(document.body.dataset.surface ?? 'site');
+      // The private preview serves the CV alone, so its links point at the public site.
+      document.querySelectorAll<HTMLAnchorElement>('a[data-path]').forEach((a) => { a.href = siteUrl(a.dataset.path!); });
+    </script>
+  </body>
+</html>

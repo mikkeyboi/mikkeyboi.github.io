@@ -1,0 +1,22 @@
+---
+/** The fixed top bar on every page. The name is always the way home to the living CV. */
+interface Props { current?: 'cv' | 'writing' | 'playground' }
+const { current } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const LINKS = [
+  { id: 'cv', label: 'Living CV', path: '/' },
+  { id: 'writing', label: 'Writing', path: '/writing.html' },
+  { id: 'playground', label: 'Playground', path: '/playground/' },
+] as const;
+---
+
+<header class="bar">
+  <a class="bar-name" href={current === 'cv' ? '#top' : base} data-path={current === 'cv' ? undefined : '/'}>
+    <span class="bar-mark" aria-hidden="true"></span>Michael Leung
+  </a>
+  <nav class="bar-links" aria-label="Site">
+    {LINKS.map(({ id, label, path }) => (
+      <a href={id === 'cv' && current === 'cv' ? '#top' : path} data-path={id === 'cv' && current === 'cv' ? undefined : path} aria-current={current === id ? 'page' : undefined}>{label}</a>
+    ))}
+  </nav>
+</header>

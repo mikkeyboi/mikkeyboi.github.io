@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import SimFrame from '../../sims/SimFrame.astro';
+import { SIMULATIONS } from '../../sims/registry';
+import '../../styles/writing.css';
+---
+
+<Base
+  title="Playground · Michael Leung"
+  description="Live, in-browser simulations from the posts: steer a model's refusal direction and more."
+  surface="playground"
+  current="playground"
+>
+  <main class="index playground">
+    <header class="index-head">
+      <p class="kicker">Playground</p>
+      <h1>Turn the knobs.</h1>
+      <p>Interactive versions of the ideas in the posts. Each runs live in your browser, with a few things to try and a link to the full write-up.</p>
+    </header>
+    {SIMULATIONS.map((s, i) => (
+      <section class="playground-sim" id={s.id}>
+        <div class="playground-copy">
+          <p class="kicker">{String(i + 1).padStart(2, '0')} · Simulation</p>
+          <h2>{s.title}</h2>
+          <p class="playground-blurb">{s.blurb}</p>
+          <p>{s.what}</p>
+          <ol class="playground-try">
+            {s.scenarios.map((sc) => <li><b>{sc.label}.</b> {sc.do}</li>)}
+          </ol>
+          <a class="playground-post" href={s.post}>Read the full write-up →</a>
+        </div>
+        <SimFrame sim={s.sim} props={{}} label="Interactive · synthetic model, computed live" />
+      </section>
+    ))}
+  </main>
+</Base>

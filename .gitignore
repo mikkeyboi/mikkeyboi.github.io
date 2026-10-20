@@ -1,21 +1,7 @@
-/.quarto/
-/_site/
-/_freeze/
-*.html
-!_includes/*.html
-!living-cv/index.html
 .DS_Store
-.ipynb_checkpoints/
-.venv/
-__pycache__/
 node_modules/
 
-**/*.quarto_ipynb
-
-# Quarto preview logs (local only)
-.quarto-preview.log
-.quarto-preview.err.log
-
-living-cv/dist/
-living-cv/rust/target/
-living-cv/wasm/
+site/dist/
+site/.astro/
+site/rust/target/
+site/wasm/

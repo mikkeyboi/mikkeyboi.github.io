@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { getPosts, toCard } from '../lib/posts';
+
+const cards = (await getPosts()).map(toCard);
+---
+
+<Base
+  title="Michael Leung · Living CV"
+  description="Min Wah (Michael) Leung: research at the edge, delivered into systems that never flinch. Brain-computer interfaces, feedback intelligence at scale, and autonomous smart buildings."
+  surface="living-cv"
+  current="cv"
+>
+  <main></main>
+  <script id="posts-data" type="application/json" set:html={JSON.stringify(cards)} />
+</Base>
+
+<script>
+  import '../main.ts';
+  import { QuickView } from '../quickview/quickview';
+
+  QuickView.attach();
+</script>

@@ -1,66 +1,53 @@
-# mikkeyboi.github.io — Quarto site source
+# minwahleung.ca
 
-Personal site + blog. Built with [Quarto](https://quarto.org), deployed to GitHub Pages via Actions on every push to `main`.
-
-## Layout
+My personal site: a living CV, the writing behind it, and a playground of interactive simulations.
+It's one Astro project in [`site/`](site/), deployed to GitHub Pages by Actions on every push to `main`.
+It's served at <https://minwahleung.ca>; <https://mikkeyboi.github.io> redirects there.
 
 ```
-.
-├── living-cv/              Home page: the living CV (Vite + TypeScript, Rust → WebAssembly)
-├── _quarto.yml             Site config (theme, navbar, render list)
-├── writing.qmd             Writing index = posts listing (/writing.html)
-├── about.qmd               About page
-├── playground/             Interactive simulations (OJS widgets)
-├── posts/NN-slug/          One post per folder; URLs stay /posts/NN-slug/
-├── fonts/                  Ubuntu, shared by the living CV and the Quarto theme
-├── styles.css, theme*.scss Quarto styling (dark first, matching the living CV)
-└── .github/workflows/publish.yml   Builds the living CV, renders Quarto, merges both, deploys
+site/
+├── src/pages/            Routes: / (living CV), /writing.html, /posts/<slug>/, /playground/
+├── src/content/posts/    One folder per post: index.md(x) plus its figures and data
+├── src/layouts/, components/, styles/   The shared shell and design system
+├── src/sims/             Interactive figures, mounted as islands in posts and on the playground
+├── src/quickview/        Opens posts from the CV as a quick read
+├── src/scenes/, core/    The living CV's scroll-driven scenes and engine
+└── rust/                 Compute kernels, compiled to WebAssembly
 ```
-
-The published site is one folder: Quarto renders posts, the playground and the writing index into
-`_site/`, then the workflow copies `living-cv/dist/` over it, so `/` is the living CV and everything
-else keeps its URL. Pull requests run the same build without deploying.
 
 ## Local preview
 
 ```bash
-# Install Quarto first: https://quarto.org/docs/get-started/
-quarto preview              # live-reload at http://localhost:4444 (posts, playground, writing)
-(cd living-cv && npm ci && npm run dev)   # the living CV on its own
-
-# The whole site, as published:
-(cd living-cv && npm ci && npm run build) && quarto render && cp -R living-cv/dist/. _site/
+cd site
+npm ci
+npm run dev       # live preview
+npm run check     # astro check, ESLint, Vitest
+npm run build && npm run verify   # the site as published, plus the public-URL check
 ```
 
-## Publishing
+## Writing a post
 
-When this folder is pushed to `mikkeyboi/mikkeyboi.github.io` (the `main` branch), the Actions workflow builds the living CV, renders Quarto, and publishes to GitHub Pages automatically. Site URL: <https://minwahleung.ca> (also served at <https://mikkeyboi.github.io>, which redirects).
-
-**One-time setup on the GitHub repo:**
-
-1. Create the repo `mikkeyboi/mikkeyboi.github.io` (must match the username for a *user* site).
-2. Settings → Pages → Source = **GitHub Actions** (not the legacy "Deploy from a branch").
-3. Push this folder's contents to `main`. The workflow will run and the site will appear at <https://mikkeyboi.github.io> in a couple of minutes.
-
-## Conventions
-
-- **Drafts stay drafts.** Each post starts with `draft: true` in the YAML front-matter so it doesn't appear on the listing until you flip it to `false`.
-- **Plans live in `anthropic-prep/blog-plans/`**, not here. This folder is for the rendered site only.
-- **No proprietary content.** Sanitization happens *before* a draft moves into a `posts/NN-slug/index.qmd`. See sanitization checklists in each plan.
-- **One post per folder** (`posts/NN-slug/index.qmd` + any `figures/` subfolder). Numeric prefixes are stable; titles can change.
-
-## Adding a new post
-
-1. `mkdir posts/NN-slug && touch posts/NN-slug/index.qmd`
-2. Front-matter:
+1. Create `site/src/content/posts/NN-slug/index.md`. The folder name is the URL, `/posts/NN-slug/`, and it never changes.
+2. Fill in the front matter. `src/content.config.ts` checks it at build time.
    ```yaml
    ---
    title: "..."
-   description: "..."
-   author: "Mike Leung"
-   date: "YYYY-MM-DD"
-   categories: [tag1, tag2]
+   description: "..."            # the dek under the title, and the social card text
+   date: 2026-10-20
+   tags: [interpretability, steering]
+   image: ./images/hero.png      # social card
+   short: "..."                  # card title on the CV
+   tag: Interpretability         # card kicker
+   blurb: "..."                  # card line on the CV
+   hue: teal                     # the post's accent: copper, teal, red, violet, sky, mint or amber
    draft: true
    ---
    ```
-3. Preview locally with `quarto preview`. Push when ready.
+3. Write in Markdown. A paragraph holding only an image becomes a numbered figure, with the alt text as its caption. `$...$` and `$$...$$` render as maths.
+4. For an interactive figure, name the file `index.mdx` and import a component from `src/sims/`, as post 05 does with `<RefusalToy />`.
+5. Set `draft: false` to publish. The post then appears on the CV, in Writing, and in the quick view.
+
+## Conventions
+
+- **No proprietary content.** Sanitize before a draft becomes a post.
+- **Public URLs are permanent.** `npm run verify` fails the build if a post, `/writing.html`, `/playground/` or `/about.html` stops being generated.

@@ -1,0 +1,19 @@
+---
+import Cover from './Cover.astro';
+import { formatDate, readingMinutes, type PostEntry } from '../lib/posts';
+import { PALETTE } from '../core/color';
+
+interface Props { post: PostEntry; size?: 'lg' | 'md' }
+const { post, size = 'md' } = Astro.props;
+const { data } = post;
+---
+
+<a class:list={['post-card', `post-card-${size}`]} href={`/posts/${post.id}/`} style={`--accent: rgb(${PALETTE[data.hue].join(' ')})`}>
+  <Cover slug={post.id} hue={data.hue} class="post-card-cover" />
+  <div class="post-card-body">
+    <span class="kicker">{data.tag}</span>
+    <h3>{size === 'lg' ? data.title : data.short}</h3>
+    <p>{size === 'lg' ? data.description : data.blurb}</p>
+    <span class="post-card-meta">{formatDate(data.date)} · {readingMinutes(post)} min read</span>
+  </div>
+</a>

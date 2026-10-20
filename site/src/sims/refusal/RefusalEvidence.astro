@@ -1,0 +1,9 @@
+---
+import type { Metrics } from './evidence';
+import SimFrame from '../SimFrame.astro';
+
+interface Props { metrics: Metrics }
+const { metrics } = Astro.props;
+---
+
+<SimFrame sim="refusal-evidence" props={{ metrics }} label="Measured · committed metrics, nothing generated live" />
